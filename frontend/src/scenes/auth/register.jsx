@@ -14,6 +14,7 @@ import {
   MenuItem,
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+// @ts-ignore
 import { Login, Register } from "../../../wailsjs/go/main/App";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@emotion/react";
@@ -21,6 +22,11 @@ import bg from "../../assets/images/Untitled.png";
 import { btnstyle, menuItemStyle, textFieldSx } from "../../styles/styles";
 import { PlatformOverviewCard } from "../../components/template/template";
 function RegisterUser({ setAuthStatus }) {
+  if (typeof Register !== "function") {
+    console.log("Register function is not available. Please check your Wails setup.");
+      setError("System not ready. Please wait a moment or restart.");
+      return;
+    }
   const theme = useTheme();
   let registerAsVerifier = false;
   const navigate = useNavigate();

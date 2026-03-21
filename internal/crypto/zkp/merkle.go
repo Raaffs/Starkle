@@ -28,13 +28,11 @@ func (id *MerkleProof) New()  {
 
 // GenerateRootProof (Issuer side)
 func (id *MerkleProof) GenerateRootProof(c models.CertificateData) (Hash, SaltedCertificate, error) {
-	// 1. Salt the fields
 	saltedCert, err := SaltCertificate(c)
 	if err != nil {
 		return "", SaltedCertificate{}, err
 	}
 
-	// 2. Prepare state for Merkle Tree generation (keys must be sorted for deterministic ordering)
 	var keys []string
 	for key := range saltedCert.SaltedFields {
 		keys = append(keys, key)
@@ -44,13 +42,12 @@ func (id *MerkleProof) GenerateRootProof(c models.CertificateData) (Hash, Salted
 	id.FieldLeaves = saltedCert.SaltedFields
 	id.LeafHashes = make([]Hash, 0, len(keys))
 
-	// 3. Build the ordered LeafHashes list
+	//  Build the ordered LeafHashes list
 	for _, key := range keys {
 		leaf := id.FieldLeaves[key]
 		id.LeafHashes = append(id.LeafHashes, leaf.Hash)
 	}
 
-	// 4. Calculate Merkle Root
 	id.RootHash = calculateMerkleRoot(id.LeafHashes)
 
 	// The Issuer sends the Root Hash (to Blockchain) and the SaltedCertificate (to Requestor)
@@ -58,7 +55,6 @@ func (id *MerkleProof) GenerateRootProof(c models.CertificateData) (Hash, Salted
 }
 
 
-// --- Verification Helper (Verifier Logic) ---
 
 // VerifyProof checks if a disclosed proof matches the expected root hash.
 // This runs on the client/verifier side.
@@ -74,10 +70,8 @@ func VerifyProof(p Proof, expectedRoot Hash) bool {
         return false 
     }
 
-    // Re-calculate the root 
     calculatedRoot := calculateMerkleRoot(p.MerkleProof)
 
-    // Verify
     return calculatedRoot == expectedRoot && calculatedRoot == p.RootHash
 }
 

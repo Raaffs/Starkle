@@ -79,7 +79,7 @@ func main() {
 	if err != nil {
 		println("Error:", err.Error())
 	}
-	if err:=godotenv.Load(".env","keys/keyMap","accounts/accounts");err!=nil{
+	if err:=godotenv.Load(".env");err!=nil{
 		println("Error : ",err.Error())
 	}
 }

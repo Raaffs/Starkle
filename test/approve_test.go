@@ -21,7 +21,7 @@ func TestApprove(t *testing.T) {
 	);err!=nil{
 		t.Fatal(err)
 	}
-	_, err:=i.Instance.ApproveVerifier(c.TxOpts,"ins");if err!=nil{
+	_, err:=i.Instance.ApproveVerifier(c.TxOpts,"ins4");if err!=nil{
 		t.Fatal(err)
 	}	
 }

@@ -69,7 +69,7 @@ func (c *Config) AddProfile(username, accountPath, keyPath, identityPath string)
 		return fmt.Errorf("failed to marshal updated config: %w", err)
 	}
 
-	if err := os.WriteFile(".config_test.json", data, 0644); err != nil {
+	if err := os.WriteFile(".config.json", data, 0644); err != nil {
 		return fmt.Errorf("failed to write updated config: %w", err)
 	}
 

@@ -22,7 +22,6 @@ func TestVerifyProof_Scenarios(t *testing.T) {
 		t.Fatalf("Failed to generate root: %v", err)
 	}
 
-	// Helper to extract leaf hashes in deterministic order
 	extractHashes := func(s SaltedCertificate) []Hash {
 		var h []Hash
 		var keys []string
@@ -38,7 +37,6 @@ func TestVerifyProof_Scenarios(t *testing.T) {
 
 	allLeaves := extractHashes(saltedCert)
 
-	// 2. Define Test Cases
 	t.Run("Valid Disclosure", func(t *testing.T) {
 		p := Proof{
 			RootHash:    root,

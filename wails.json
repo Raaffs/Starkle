@@ -1,6 +1,6 @@
 {
   "$schema": "https://wails.io/schemas/config.v2.json",
-  "name": "ProofChainv3",
+"name": "ProofChainv3",
   "outputfilename": "ProofChain",
   "frontend:install": "npm install",
   "frontend:build": "npm run build",

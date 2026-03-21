@@ -63,7 +63,6 @@ export const DataGridSx = {
   overflow: "hidden",
   color: "#0f172a",
 
-  /* ===== HEADER & FOOTER ===== */
   "& .MuiDataGrid-columnHeaders, & .MuiDataGrid-footerContainer": {
     background: "linear-gradient(135deg, #fb7185 0%, #f97316 100%)",
     color: "#ffffff",
@@ -79,13 +78,11 @@ export const DataGridSx = {
     display: "none",
   },
 
-  /* rounded corners */
   "& .MuiDataGrid-columnHeaders": {
     borderTopLeftRadius: "18px",
     borderTopRightRadius: "18px",
   },
 
-  /* ===== ROWS ===== */
   "& .MuiDataGrid-row": {
     backgroundColor: "#f1b9b7",
     color: "#475569",
@@ -107,13 +104,11 @@ export const DataGridSx = {
     backgroundColor: "#ffe4e6 !important",
   },
 
-  /* ===== CELLS ===== */
   "& .MuiDataGrid-cell": {
     borderBottom: "1px solid #f1f5f9",
     paddingY: 1.1,
   },
 
-  /* ===== CHECKBOX ===== */
   "& .MuiCheckbox-root": {
     color: "#fde68a",
   },
@@ -121,7 +116,6 @@ export const DataGridSx = {
     color: "#ffffff",
   },
 
-  /* no jank focus */
   "& .MuiDataGrid-cell:focus, & .MuiDataGrid-columnHeader:focus": {
     outline: "none",
   },
@@ -131,7 +125,7 @@ export const DataGridDarkSx = {
   width: "dynamic",
   maxWidth: "170vh",
 
-  backgroundColor: "#151632", // deep slate
+  backgroundColor: "#151632", 
   borderRadius: "18px",
   border: "1px solid #1e293b",
   boxShadow: "0 18px 45px rgba(0,0,0,0.55)",
@@ -153,13 +147,11 @@ export const DataGridDarkSx = {
     display: "none",
   },
 
-  /* rounded corners */
   "& .MuiDataGrid-columnHeaders": {
     borderTopLeftRadius: "18px",
     borderTopRightRadius: "18px",
   },
 
-  /* ===== ROWS ===== */
   "& .MuiDataGrid-row": {
     backgroundColor: "#151632",
     color: "#cbd5f5",
@@ -182,13 +174,11 @@ export const DataGridDarkSx = {
     backgroundColor: "rgba(251,113,133,0.15) !important",
   },
 
-  /* ===== CELLS ===== */
   "& .MuiDataGrid-cell": {
     borderBottom: "1px solid #1e293b",
     paddingY: 1.1,
   },
 
-  /* ===== CHECKBOX ===== */
   "& .MuiCheckbox-root": {
     color: "#fcd34d",
   },
@@ -206,7 +196,6 @@ export const statBoxStyles = (theme: Theme, colors: any) => ({
   gridColumn: "span 3",
   backgroundColor:
     theme.palette.mode === "dark" ? colors.primary[800] :colors.blueAccent[900],
-    //  colors.blueAccent[800]
   display: "flex",
   alignItems: "center",
   justifyContent: "center",

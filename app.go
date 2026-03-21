@@ -90,6 +90,7 @@ func (app *App) Login(username string, password string) error {
 			)
 			return fmt.Errorf("error retrieving account. Make sure the credentials are correct")
 		}
+		log.Println(privateKey)
 		if err := blockchain.Init(
 			c,
 			i,
@@ -97,6 +98,8 @@ func (app *App) Login(username string, password string) error {
 			app.config.Services.CONTRACT_ADDR,
 			app.config.Services.RPC_PROVIDERS_URLS.Local[GANACHE],
 		); err != nil {
+			log.Println(err,privateKey,
+			)
 			app.logger.Error(
 				"Error connecting to the blockchain",
 				"endpoint", app.config.Services.RPC_PROVIDERS_URLS.Local,
@@ -160,6 +163,7 @@ func (app *App) Register(privateKeyString, name, password string, isInstitute bo
 		app.config.Services.CONTRACT_ADDR,
 		app.config.Services.RPC_PROVIDERS_URLS.Local[GANACHE],
 	); err != nil {
+		log.Println(err)
 		app.logger.Error(
 			"Error connecting to the blockchain",
 			"endpoint", app.config.Services.RPC_PROVIDERS_URLS.Local,
@@ -187,6 +191,7 @@ func (app *App) Register(privateKeyString, name, password string, isInstitute bo
 			app.config.Dirs.Account,
 		)
 		if err != nil {
+			
 			return err
 		}
 		accountPath = path
@@ -194,6 +199,7 @@ func (app *App) Register(privateKeyString, name, password string, isInstitute bo
 	})
 	if err := g.Wait(); err != nil {
 		app.logger.Error("Error registering user", "err", err)
+
 		return fmt.Errorf("error connecting to blockchain")
 	}
 

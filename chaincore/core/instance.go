@@ -16,8 +16,9 @@ type ContractVerifyOperations struct {
 }
 
 func (cv *ContractVerifyOperations)SetClient(c *ethclient.Client){
-	cv.Client=cg
+	cv.Client=c
 }
+
 func (cv *ContractVerifyOperations)New(contractAddr string) error {
 	cv.Address = common.HexToAddress(contractAddr)
 	instance, err := verify.NewVerify(cv.Address, cv.Client)
