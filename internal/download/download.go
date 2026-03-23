@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/Suy56/ProofChain/internal/utils"
+	"github.com/Suy56/ProofChain/storage/models"
 )
 
 type hashedField struct {
@@ -20,16 +21,9 @@ type hashedField struct {
 	Value string `json:"value"`
 }
 
-type DownloadProof struct {
-	Address         hashedField            `json:"Address"`
-	Age             hashedField            `json:"Age"`
-	BirthDate       hashedField            `json:"BirthDate"`
-	CertificateName hashedField            `json:"CertificateName"`
-	Name            hashedField            `json:"Name"`
-	PublicAddress   hashedField            `json:"PublicAddress"`
-	UniqueID        hashedField            `json:"UniqueID"`
-	Extra           map[string]hashedField `json:"Extra"`
-}
+// type DownloadProof = storageclient.Client
+
+type DownloadProof = models.CertificateBase[hashedField]
 
 // Downloader manages the lifecycle of exporting proof files
 type Downloader struct {

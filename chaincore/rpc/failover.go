@@ -18,9 +18,6 @@ type FailoverBackend struct {
 }
 
 var _ bind.ContractBackend = (*FailoverBackend)(nil)
-// -----------------------------
-// ContractCaller
-// -----------------------------
 func (f *FailoverBackend) CallContract(
 	ctx context.Context,
 	call ethereum.CallMsg,

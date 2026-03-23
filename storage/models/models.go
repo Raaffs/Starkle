@@ -6,13 +6,16 @@ type Document struct {
 	PublicAddress     string `bson:"publicAddress" json:"publicAddress"`
 }
 
-type CertificateData struct {
-    CertificateName string     			`json:"certificateName" bson:"certificateName"`
-    PublicAddress   string     			`json:"publicAddress" bson:"publicAddress"`
-    Name            string     			`json:"name" bson:"name"`
-    Address         string     			`json:"address" bson:"address"`
-    Age             string 				`json:"age" bson:"age"` // number or string
-    BirthDate       string     			`json:"birthDate" bson:"birthDate"`
-    UniqueID        string     			`json:"uniqueId" bson:"uniqueId"`
-    Extra           map[string]string	`json:"-" bson:",inline"` // inline extra props
+type CertificateBase[T any] struct {
+    Address         T            `json:"address" bson:"address"`
+    Age             T            `json:"age" bson:"age"`
+    BirthDate       T            `json:"birthDate" bson:"birthDate"`
+    CertificateName T            `json:"certificateName" bson:"certificateName"`
+    Name            T            `json:"name" bson:"name"`
+    PublicAddress   T            `json:"publicAddress" bson:"publicAddress"`
+    UniqueID        T            `json:"uniqueId" bson:"uniqueId"`
+    Extra           map[string]T `json:"extra" bson:",inline"`
 }
+
+type CertificateData = CertificateBase[string]
+
