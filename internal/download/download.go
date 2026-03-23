@@ -21,8 +21,9 @@ type hashedField struct {
 	Value string `json:"value"`
 }
 
-// type DownloadProof = storageclient.Client
-
+// DownloadProof is the structure that holds the necessary data for reconstructing the proofs for each field. 
+// It mirrors the CertificateData structure but with hashedField values instead of plain strings.
+// Which is why we're using a generic base structure
 type DownloadProof = models.CertificateBase[hashedField]
 
 // Downloader manages the lifecycle of exporting proof files

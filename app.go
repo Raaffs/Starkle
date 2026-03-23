@@ -277,29 +277,6 @@ func (app *App) UploadDocument(institute, name, description string) error {
 	}
 	return nil
 }
-func (app *App) GetAllDocs() ([]blockchain.VerificationDocument, error) {
-	var userDocs []blockchain.VerificationDocument
-	docs, err := app.account.GetDocuments()
-	if err != nil {
-		app.logger.Error(
-			"Error getAllDocs",
-			"gas limit", app.account.GetTxOpts().GasLimit,
-			"gas price", app.account.GetTxOpts().GasPrice,
-			"err", err,
-		)
-		return nil, fmt.Errorf("error retrieving documents")
-	}
-	for i := range docs {
-		//We're calling contract to get public key of institute or requester, however if
-		//loggedIn user's address doesn't match with either of them, we don't need to try and drcrypt ipfs cid.
-		//This also avoids any unecessary calls to contract
-		if docs[i].Institute != app.account.GetName() && docs[i].Requester != app.account.GetTxOpts().From.Hex() {
-			continue
-		}
-		userDocs = append(userDocs, docs[i])
-	}
-	return userDocs, nil
-}
 
 func (app *App) GetAcceptedDocs() ([]blockchain.VerificationDocument, error) {
 	docs, err := app.account.GetDocuments()
