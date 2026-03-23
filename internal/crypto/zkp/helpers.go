@@ -10,7 +10,7 @@ import (
 	"github.com/Suy56/ProofChain/internal/utils"
 )
 
-type Hash string
+	type Hash string
 
 // SaltCertificate iterates over the models.CertificateData, salts each field, and returns the map of salted leaves.
 func SaltCertificate(c models.CertificateData) (SaltedCertificate, error) {

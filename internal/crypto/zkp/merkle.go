@@ -84,7 +84,6 @@ func calculateMerkleRoot(leaves []Hash) Hash {
 		return leaves[0]
 	}
 
-	// Pad if odd
 	currentLeaves := make([]Hash, len(leaves))
 	copy(currentLeaves, leaves)
 	if len(currentLeaves)%2 != 0 {

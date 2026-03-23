@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package prover;
+
+option go_package = "./proto"; 
+
+service ProverService {
+  rpc GenerateProof (ProofRequest) returns (ProofResponse);
+  rpc VerifyProof (VerifyRequest) returns (VerifyResponse);
+}
+
+message ProofRequest {
+  oneof proof_data {
+    MembershipRequest membership = 1;
+    RangeRequest range = 2;
+  }
+}
+
+message MembershipRequest {
+  string actual_value = 1;
+  string actual_salt = 2;       // Hex string
+  repeated string all_leaves = 3; // Hex strings
+  repeated string public_list = 4;
+  string public_root = 5;       // Hex string
+}
+
+message RangeRequest {
+  string actual_value = 1;
+  string actual_salt = 2;       // Hex string
+  repeated string all_leaves = 3; // Hex strings
+  uint32 lower_bound = 4;
+  uint32 upper_bound = 5;
+  string public_root = 6;       // Hex string
+}
+
+message ProofResponse {
+  string receipt_id = 1;
+  uint32 cycles = 2;
+  bytes receipt_bytes = 3;
+}
+
+message VerifyRequest {
+  string receipt_id = 1;
+  string proof_type = 2; 
+}
+
+message VerifyResponse {
+  bool valid = 1;
+  string error_msg = 2;
+}
