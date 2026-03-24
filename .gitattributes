@@ -1,0 +1,5 @@
+# Treat Wails generated JS as vendor code (ignores it in stats)
+frontend/wailsjs/** linguist-vendored
+
+# Explicitly mark Prover files as generated
+internal/crypto/zkp/rpc/proto/*.go linguist-generated
