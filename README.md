@@ -50,11 +50,13 @@ Proofchain is a document verficationa and certficate issuance platform, allowing
 
 ### Built With
 
-* [![Go][Go]][Go-url]
-* [![React][React.js]][React-url]
-* [![Ethereum][Ethereum]][Ethereum-url]
-* [![mongodb][mongodb]][mongodb-url]
-* [![wails][wails]][wails-url]
+[![Go][Go]][Go-url]
+[![React][React.js]][React-url]
+[![rust][rust]][rust-url]
+[![wails][wails]][wails-url]
+[![risc0][risc0]][risc0-url]
+[![Ethereum][Ethereum]][Ethereum-url]
+[![mongodb][mongodb]][mongodb-url]
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
@@ -85,7 +87,7 @@ Proofchain is a document verficationa and certficate issuance platform, allowing
   ---
 ### Set Up
 
-1. Set up Enviroment variables in `.env` file
+1. Set up Envihttps://img.shields.io/badge/RISC0-FFC700?style=for-the-badgeroment variables in `.env` file
     ```
     cd ProofChain
     PRIVATE_KEY=YOUR_PRIVATE_KEY
@@ -196,3 +198,7 @@ Thank You!
 [mongodb-url]: https://www.mongodb.com/
 [wails]: https://img.shields.io/badge/wails-red?style=for-the-badge&logo=wails
 [wails-url]: https://wails.io
+[risc0]: https://img.shields.io/badge/RISC0-FFC700?style=for-the-badge
+[risc0-url]: https://risczero.com/
+[rust]: https://img.shields.io/badge/Rust-E57324?style=for-the-badge&logo=rust&logoColor=white
+[rust-url]: https://rust-lang.org/
