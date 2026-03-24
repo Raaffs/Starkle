@@ -126,6 +126,11 @@ func WKey(encryptedData,keyDir string)(string,error){
     if err != nil {
         return "", fmt.Errorf("failed to read home dir path while writing keys :%v",err)
     }
+	
+	if err := os.MkdirAll(filepath.Join(homeDir,keyDir), 0755); err != nil {
+		return "", fmt.Errorf("failed to create key directory: %v", err)
+	}
+	
 	filePath:=filepath.Join(homeDir,keyDir,fmt.Sprintf("%d",time.Now().UnixNano()) ) 
 	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {

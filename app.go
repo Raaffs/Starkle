@@ -163,7 +163,6 @@ func (app *App) Register(privateKeyString, name, password string, isInstitute bo
 		app.config.Services.CONTRACT_ADDR,
 		app.config.Services.RPC_PROVIDERS_URLS.Local[GANACHE],
 	); err != nil {
-		log.Println(err)
 		app.logger.Error(
 			"Error connecting to the blockchain",
 			"endpoint", app.config.Services.RPC_PROVIDERS_URLS.Local,
