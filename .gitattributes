@@ -1,5 +1,7 @@
 # Treat Wails generated JS as vendor code (ignores it in stats)
 frontend/wailsjs/** linguist-vendored
+# 2. Ignore styling constants (The "Theme" bloat)
+frontend/src/themes.js linguist-vendored
 
 # Explicitly mark Prover files as generated
 internal/crypto/zkp/rpc/proto/*.go linguist-generated
