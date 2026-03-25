@@ -11,20 +11,15 @@ import (
 	"strings"
 
 	"github.com/Suy56/ProofChain/internal/utils"
-	"github.com/Suy56/ProofChain/storage/models"
+	"github.com/Suy56/ProofChain/internal/models"
 )
 
-type hashedField struct {
-	Hash  string `json:"hash"`
-	Key   string `json:"key"`
-	Salt  string `json:"salt"`
-	Value string `json:"value"`
-}
+
 
 // DownloadProof is the structure that holds the necessary data for reconstructing the proofs for each field. 
-// It mirrors the CertificateData structure but with hashedField values instead of plain strings.
+// It mirrors the CertificateData structure but with models.LeafFields values instead of plain strings.
 // Which is why we're using a generic base structure
-type DownloadProof = models.CertificateBase[hashedField]
+type DownloadProof = models.CertificateBase[models.LeafFields]
 
 // Downloader manages the lifecycle of exporting proof files
 type Downloader struct {
@@ -33,27 +28,27 @@ type Downloader struct {
 	logger    *slog.Logger
 }
 
-type DocumentWrapper struct {
+type certificateWrapper struct {
 	SaltedFields DownloadProof `json:"salted_fields"`
 }
 
 // NewDownloader initializes the downloader, determines the path, and unmarshals the data
-func NewDownloader(document []byte, logger *slog.Logger) (*Downloader, error) {
-	var wrapper DocumentWrapper
-	if err := json.Unmarshal(document, &wrapper); err != nil {
+func NewDownloader(certificate []byte, logger *slog.Logger) (*Downloader, error) {
+	var wrapper certificateWrapper
+	if err := json.Unmarshal(certificate, &wrapper); err != nil {
 		return nil, fmt.Errorf("could not decode certificate proof: %w", err)
 	}
-	doc := wrapper.SaltedFields
+	cert := wrapper.SaltedFields
 	basePath, err := getDownloadDir()
 	if err != nil {
 		return nil, err
 	}
 	// Calculate the specific folder for this certificate
-	finalDir := filepath.Join(basePath, doc.CertificateName.Value)
+	finalDir := filepath.Join(basePath, cert.CertificateName.Value)
 
 	return &Downloader{
 		TargetDir: finalDir,
-		ProofData: doc,
+		ProofData: cert,
 		logger:    logger,
 	}, nil
 }
@@ -91,13 +86,13 @@ func (d *Downloader) store(key string, proof any) error {
 	return os.WriteFile(filename, data, 0644)
 }
 
-func (d *Downloader) extractProofValues(activeKey string, fullValue any) map[string]hashedField {
-	slim := func(f hashedField) hashedField {
-		return hashedField{Hash: f.Hash, Key: f.Key}
+func (d *Downloader) extractProofValues(activeKey string, fullValue any) map[string]models.LeafFields {
+	slim := func(f models.LeafFields) models.LeafFields {
+		return models.LeafFields{Hash: f.Hash, Key: f.Key}
 	}
 
 	v := d.ProofData
-	result := map[string]hashedField{
+	result := map[string]models.LeafFields{
 		"Address":         slim(v.Address),
 		"Age":             slim(v.Age),
 		"BirthDate":       slim(v.BirthDate),
@@ -111,7 +106,7 @@ func (d *Downloader) extractProofValues(activeKey string, fullValue any) map[str
 		result[k] = slim(val)
 	}
 
-	hf, ok := fullValue.(hashedField)
+	hf, ok := fullValue.(models.LeafFields)
 	if ok {
 		result[activeKey] = hf
 	}

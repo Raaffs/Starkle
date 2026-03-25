@@ -457,3 +457,17 @@ func (app *App) Download(hash, instituteName, requesterAddress string) (string, 
 	}
 	return "Downloaded successfully", nil
 }
+
+func (app *App) GenerateZKP(hash, instituteName, requesterAddress string, publicConstraint []any )(string, error){
+	decryptedCert, err := app.getDecryptedCertificate(hash, instituteName, requesterAddress)
+    if err != nil {
+        app.logger.Error(
+            "An error occurred while downloading/decrypting certificate",
+            "hash", hash,
+            "err", err,
+        )
+        return "", fmt.Errorf("an error occurred while downloading")
+    }
+	log.Println(decryptedCert)
+	return "proof generated successfully",nil
+}

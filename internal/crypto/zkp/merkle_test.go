@@ -30,7 +30,7 @@ func TestVerifyProof_Scenarios(t *testing.T) {
 		}
 		sort.Strings(keys)
 		for _, key := range keys {
-			h = append(h, s.SaltedFields[key].Hash)
+			h = append(h, Hash(s.SaltedFields[key].Hash))
 		}
 		return h
 	}
@@ -38,7 +38,7 @@ func TestVerifyProof_Scenarios(t *testing.T) {
 	allLeaves := extractHashes(saltedCert)
 
 	t.Run("Valid Disclosure", func(t *testing.T) {
-		p := Proof{
+		p := ProofVerification{
 			RootHash:    root,
 			Attribute:   "Name",
 			Value:       saltedCert.SaltedFields["Name"].Value,
@@ -51,7 +51,7 @@ func TestVerifyProof_Scenarios(t *testing.T) {
 	})
 
 	t.Run("Tampered Value", func(t *testing.T) {
-		p := Proof{
+		p := ProofVerification{
 			RootHash:    root,
 			Attribute:   "Name",
 			Value:       "bob", // Tampered
@@ -64,7 +64,7 @@ func TestVerifyProof_Scenarios(t *testing.T) {
 	})
 
 	t.Run("Tampered Salt", func(t *testing.T) {
-		p := Proof{
+		p := ProofVerification{
 			RootHash:    root,
 			Attribute:   "Name",
 			Value:       saltedCert.SaltedFields["Name"].Value,
@@ -82,7 +82,7 @@ func TestVerifyProof_Scenarios(t *testing.T) {
 		copy(maliciousLeaves, allLeaves)
 		maliciousLeaves[0] = Hash("00000000000000000000000000000000")
 
-		p := Proof{
+		p := ProofVerification{
 			RootHash:    root,
 			Attribute:   "Name",
 			Value:       saltedCert.SaltedFields["Name"].Value,
@@ -95,7 +95,7 @@ func TestVerifyProof_Scenarios(t *testing.T) {
 	})
 
 	t.Run("Malicious institute and requestor roots", func(t *testing.T) {
-		p := Proof{
+		p := ProofVerification{
 			//fake root
 			RootHash:    Hash("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"),
 			Attribute:   "Name",

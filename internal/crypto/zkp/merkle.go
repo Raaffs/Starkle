@@ -4,13 +4,13 @@ import (
 	"slices"
 	"sort"
 
-	"github.com/Suy56/ProofChain/storage/models"
+	"github.com/Suy56/ProofChain/internal/models"
 )
 
 // MerkleProof implements the ZKProof interface and holds the committed data state.
 type MerkleProof struct {
 	RootHash   Hash
-	FieldLeaves map[string]FieldLeaf // Map for O(1) lookup during Disclosure
+	FieldLeaves map[string]models.LeafFields // Map for O(1) lookup during Disclosure
 	LeafHashes []Hash                // Ordered list for Merkle Tree construction
 }
 
@@ -22,12 +22,12 @@ func NewMerkleProof() *MerkleProof {
 
 func (id *MerkleProof) New()  {
 	id.RootHash = ""
-	id.FieldLeaves = make(map[string]FieldLeaf)
+	id.FieldLeaves = make(map[string]models.LeafFields)
 	id.LeafHashes = make([]Hash, 0)
 }
 
 // GenerateRootProof (Issuer side)
-func (id *MerkleProof) GenerateRootProof(c models.CertificateData) (Hash, SaltedCertificate, error) {
+func (id *MerkleProof) GenerateRootProof(c models.CertificateBase[string]) (Hash, SaltedCertificate, error) {
 	saltedCert, err := SaltCertificate(c)
 	if err != nil {
 		return "", SaltedCertificate{}, err
@@ -45,7 +45,7 @@ func (id *MerkleProof) GenerateRootProof(c models.CertificateData) (Hash, Salted
 	//  Build the ordered LeafHashes list
 	for _, key := range keys {
 		leaf := id.FieldLeaves[key]
-		id.LeafHashes = append(id.LeafHashes, leaf.Hash)
+		id.LeafHashes = append(id.LeafHashes, Hash(leaf.Hash))
 	}
 
 	id.RootHash = calculateMerkleRoot(id.LeafHashes)
@@ -58,7 +58,7 @@ func (id *MerkleProof) GenerateRootProof(c models.CertificateData) (Hash, Salted
 
 // VerifyProof checks if a disclosed proof matches the expected root hash.
 // This runs on the client/verifier side.
-func VerifyProof(p Proof, expectedRoot Hash) bool {
+func VerifyProof(p ProofVerification, expectedRoot Hash) bool {
     //Re-calculate the leaf hash for the field we are checking
     disclosedLeafHash := HashData([]byte(p.Value), []byte(p.Salt))
     

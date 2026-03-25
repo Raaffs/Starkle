@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/Suy56/ProofChain/storage/models"
+	"github.com/Suy56/ProofChain/internal/models"
 	"github.com/Suy56/ProofChain/internal/utils"
 )
 
-	type Hash string
+type Hash string
 
 // SaltCertificate iterates over the models.CertificateData, salts each field, and returns the map of salted leaves.
-func SaltCertificate(c models.CertificateData) (SaltedCertificate, error) {
+func SaltCertificate(c models.CertificateBase[string]) (SaltedCertificate, error) {
 	fieldMap := make(map[string]string)
 	var keys []string
 
@@ -26,7 +26,7 @@ func SaltCertificate(c models.CertificateData) (SaltedCertificate, error) {
 	// Sort keys alphabetically to ensure deterministic processing order
 	sort.Strings(keys)
 
-	saltedFields := make(map[string]FieldLeaf)
+	saltedFields := make(map[string]models.LeafFields)
 
 	for _, key := range keys {
 		value := fieldMap[key]
@@ -39,11 +39,11 @@ func SaltCertificate(c models.CertificateData) (SaltedCertificate, error) {
 		// Leaf Hash Logic: Hash(Value + Salt)
 		leafHash := HashData([]byte(value), []byte(salt))
 
-		leaf := FieldLeaf{
+		leaf := models.LeafFields{
 			Key:   key,
 			Value: value,
 			Salt:  salt,
-			Hash:  leafHash,
+			Hash:  models.Hash(leafHash),
 		}
 
 		saltedFields[key] = leaf

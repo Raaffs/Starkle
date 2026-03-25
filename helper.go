@@ -154,3 +154,30 @@ func (app *App) getDecryptedCertificate(hash, instituteName, requesterAddress st
 
     return decryptedCert, nil
 }
+
+// func PrepareProof(certificate models.CertificateData, publicConstraints []any)(string,error){
+	// privateInputField:=publicConstraints[0].(string)
+	// 
+// 
+	// for k,v:=range utils.Walk(certificate){
+		// if k==privateInputField{
+			// 
+		// }
+	// }
+// 
+	// isRangeProof:=isProofTypeRange(publicConstraints)
+// 
+// 
+// }
+
+func isProofTypeRange(constraint []any) bool {
+	if len(constraint) != 3 {
+		return false
+	}
+
+	_, ok0 := constraint[0].(string)
+	_, ok1 := constraint[1].(int)
+	_, ok2 := constraint[2].(int)
+
+	return ok0 && ok1 && ok2
+}
