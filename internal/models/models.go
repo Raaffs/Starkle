@@ -2,11 +2,10 @@ package models
 
 type Hash string
 
-
 type LeafFields struct {
 	Hash  Hash   `json:"hash"` // The salted hash of the value
 	Key   string `json:"key"`
-	Value string `json:"value"`
+	Value any    `json:"value"`
 	Salt  string `json:"salt"`
 }
 

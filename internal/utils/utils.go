@@ -2,10 +2,15 @@ package utils
 
 import (
 	"crypto/rand"
+	"crypto/sha3"
 	"encoding/hex"
 	"fmt"
 	"io"
+	"os"
 	"reflect"
+	"strconv"
+	"strings"
+	"time"
 
 	blockchain "github.com/Suy56/ProofChain/chaincore/core"
 )
@@ -71,4 +76,53 @@ func Walk[S any](s S) func(yield func(string, any) bool) {
 			}
 		}
 	}
+}
+
+
+
+func Keccak256File(path string) (string, error) {
+	file, err := os.Open(path);if err != nil {
+		return "", fmt.Errorf("failed to open file: %v", err)
+	}
+	defer file.Close()
+	hasher := sha3.New256()
+	if _, err := io.Copy(hasher, file); err != nil {
+		return "", fmt.Errorf("failed to hash file: %v", err)
+	}
+
+	hashBytes := hasher.Sum(nil)
+	hashString := hex.EncodeToString(hashBytes)
+	return hashString, nil
+}
+
+func FormatDateToInt(date string) (int, error) {
+	layout := "2006-01-02"
+	t, err := time.Parse(layout, date)
+	if err != nil {
+		return 0, err
+	}
+	res,err:=strconv.Atoi(t.Format("20060102"))
+	if err!=nil {
+		return -1, fmt.Errorf("Error converting date to int : ",err)
+	}
+	return res, nil
+}
+
+// It supports direct numeric strings and YYYY-MM-DD date formats.
+func CoerceToInt(s string) (int, error) {
+	s = strings.TrimSpace(s) // Clean up any stray whitespace first
+
+	// 1. Try direct conversion (e.g., "123" -> 123)
+	if val, err := strconv.Atoi(s); err == nil {
+		return val, nil
+	}
+
+	// 2. Try date conversion (e.g., "2026-03-26" -> 20260326)
+	// Using the Go reference date: Jan 2, 2006
+	if t, err := FormatDateToInt(s); err == nil {
+		// Format to "20060102" then convert that string to int
+		return t,nil
+	}
+
+	return -1, fmt.Errorf("value %q cannot be coerced to int", s)
 }

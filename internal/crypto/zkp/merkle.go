@@ -1,6 +1,7 @@
 package zkp
 
 import (
+	"encoding/binary"
 	"slices"
 	"sort"
 
@@ -27,7 +28,7 @@ func (id *MerkleProof) New()  {
 }
 
 // GenerateRootProof (Issuer side)
-func (id *MerkleProof) GenerateRootProof(c models.CertificateBase[string]) (Hash, SaltedCertificate, error) {
+func (id *MerkleProof) GenerateRootProof(c models.CertificateBase[any]) (Hash, SaltedCertificate, error) {
 	saltedCert, err := SaltCertificate(c)
 	if err != nil {
 		return "", SaltedCertificate{}, err
@@ -60,7 +61,19 @@ func (id *MerkleProof) GenerateRootProof(c models.CertificateBase[string]) (Hash
 // This runs on the client/verifier side.
 func VerifyProof(p ProofVerification, expectedRoot Hash) bool {
     //Re-calculate the leaf hash for the field we are checking
-    disclosedLeafHash := HashData([]byte(p.Value), []byte(p.Salt))
+	var disclosedLeafHash Hash
+	switch v:= p.Value.(type) {
+	case string:
+		// No conversion needed for string values
+		disclosedLeafHash = HashData([]byte(v), []byte(p.Salt))
+	case int:
+		// Convert int to byte slice for hashing
+		buf := make([]byte, 4)
+		binary.LittleEndian.PutUint32(buf, uint32(v))
+	default:
+		// Unsupported type, return false or handle as needed
+		return false
+	}
     
 	//check if disclosed hash are present in the hash fields user provided
     found := slices.Contains(p.MerkleProof, disclosedLeafHash)

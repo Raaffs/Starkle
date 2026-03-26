@@ -14,9 +14,10 @@ import (
 	"github.com/Suy56/ProofChain/internal/crypto/zkp"
 	"github.com/Suy56/ProofChain/internal/download"
 	"github.com/Suy56/ProofChain/internal/users"
+	"github.com/Suy56/ProofChain/internal/utils"
+	"github.com/Suy56/ProofChain/internal/wallet"
 	"github.com/Suy56/ProofChain/storage/models"
 	storageclient "github.com/Suy56/ProofChain/storage/storage_client"
-	"github.com/Suy56/ProofChain/internal/wallet"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/joho/godotenv"
 	"golang.org/x/sync/errgroup"
@@ -90,7 +91,6 @@ func (app *App) Login(username string, password string) error {
 			)
 			return fmt.Errorf("error retrieving account. Make sure the credentials are correct")
 		}
-		log.Println(privateKey)
 		if err := blockchain.Init(
 			c,
 			i,
@@ -253,7 +253,7 @@ func (app *App) UploadDocument(institute, name, description string) error {
 		return fmt.Errorf("An error occurred while encrypting document")
 	}
 
-	shaHash, err := Keccak256File(path)
+	shaHash, err := utils.Keccak256File(path)
 	if err != nil {
 		app.logger.Error("Error hashing file","err", err,)
 		return fmt.Errorf("Error uploading file")
@@ -306,6 +306,7 @@ func (app *App) GetPendingDocuments() ([]blockchain.VerificationDocument, error)
 	pendingDocs := app.account.GetPendingDocuments(docs)
 	return pendingDocs, nil
 }
+
 func (app *App) CreateDigitalCopy(status int, hash string, certificate models.CertificateData) error {
 	if err := users.UpdateNonce(app.account); err != nil {
 		app.logger.Error(
@@ -435,6 +436,7 @@ func (app *App) ViewDigitalCertificate(hash, instituteName, requesterAddress str
     }
     return cert, nil
 }
+
 func (app *App) Download(hash, instituteName, requesterAddress string) (string, error) {
 	decryptedCert, err := app.getDecryptedCertificate(hash, instituteName, requesterAddress)
     if err != nil {

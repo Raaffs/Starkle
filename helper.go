@@ -1,19 +1,19 @@
 package main
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"os"
+	"reflect"
 
 	"github.com/Suy56/ProofChain/internal/crypto/keyUtils"
 	"github.com/Suy56/ProofChain/internal/crypto/zkp"
+	mo "github.com/Suy56/ProofChain/internal/models"
 	"github.com/Suy56/ProofChain/internal/users"
+	"github.com/Suy56/ProofChain/internal/utils"
 	"github.com/Suy56/ProofChain/storage/models"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
-	"golang.org/x/crypto/sha3"
 )
 
 // func (app *App)autoResvolvePublicKey(target string)(string,error)
@@ -86,20 +86,7 @@ func (app *App)GetFileAndPath()([]byte, string, error){
 	return file,filePath,nil
 }
 
-func Keccak256File(path string) (string, error) {
-	file, err := os.Open(path);if err != nil {
-		return "", fmt.Errorf("failed to open file: %v", err)
-	}
-	defer file.Close()
-	hasher := sha3.New256()
-	if _, err := io.Copy(hasher, file); err != nil {
-		return "", fmt.Errorf("failed to hash file: %v", err)
-	}
 
-	hashBytes := hasher.Sum(nil)
-	hashString := hex.EncodeToString(hashBytes)
-	return hashString, nil
-}
 
 func (app *App)IsApprovedInstitute()bool{
 	approved,err:=app.account.GetApprovalStatus();if err!=nil{
@@ -109,15 +96,33 @@ func (app *App)IsApprovedInstitute()bool{
 	return approved
 }
 
+
+
 func (app *App)PrepareDigitalCopy(certificate models.CertificateData)(models.Document,string,error){
 	proof:=zkp.NewMerkleProof()
-	publicCommit,saltedCertificate,err:=proof.GenerateRootProof(certificate);if err!=nil{
+	var typedCert mo.CertificateBase[any]
+	vCert := reflect.ValueOf(&typedCert).Elem()
+
+	for k, v := range utils.Walk(certificate) {
+	    field := vCert.FieldByName(k)
+	    if !field.IsValid() || !field.CanSet() {
+	        continue
+	    }
+	    if val, err := utils.CoerceToInt(fmt.Sprint(v)); err == nil {
+	        field.SetInt(int64(val))
+	    } else {
+	        field.Set(reflect.ValueOf(v))
+	    }
+	}
+
+	publicCommit,saltedCertificate,err:=proof.GenerateRootProof(typedCert);if err!=nil{
 		app.logger.Error(
 			"error generating proof",
 			"err",err,
 		)
 		return models.Document{},"",fmt.Errorf("an error occurred while issuing certificate")
 	}
+
 	json, err := json.Marshal(saltedCertificate);if err!=nil{
 		app.logger.Error("Error Marshalling salted certificate", "err", err)
 		return models.Document{},"",fmt.Errorf("invalid certificate format")
@@ -133,7 +138,6 @@ func (app *App)PrepareDigitalCopy(certificate models.CertificateData)(models.Doc
 	return doc,string(publicCommit),nil
 }
 
-// getDecryptedCertificate centralizes the retrieval and decryption logic.
 func (app *App) getDecryptedCertificate(hash, instituteName, requesterAddress string) ([]byte, error) {
     encryptedCert, err := app.storage.RetrieveDocument(hash)
     if err != nil {
@@ -155,20 +159,30 @@ func (app *App) getDecryptedCertificate(hash, instituteName, requesterAddress st
     return decryptedCert, nil
 }
 
-// func PrepareProof(certificate models.CertificateData, publicConstraints []any)(string,error){
-	// privateInputField:=publicConstraints[0].(string)
-	// 
-// 
-	// for k,v:=range utils.Walk(certificate){
-		// if k==privateInputField{
-			// 
-		// }
-	// }
-// 
-	// isRangeProof:=isProofTypeRange(publicConstraints)
-// 
-// 
+// func(app *App) PrepareProofInputs(certificate mo.CertificateBase[mo.LeafFields], publicConstraints []any)(string,error){
+// 	privateInputField:=publicConstraints[0].(string)
+// 	mapper:= make(map[string]mo.LeafFields,0)
+
+// 	for k,v:=range utils.Walk(certificate){
+// 		val,ok:=v.(mo.LeafFields); if !ok{
+// 			app.logger.Error(
+// 					"Error asserting leaf fields",
+// 					"key",k,
+// 					"value",v,
+// 			)		
+// 			continue
+// 		}
+
+// 		mapper[k]=val
+// 	}
+// 	isRangeProof:=isProofTypeRange(publicConstraints)
+
+// 		return  "",nil
 // }
+
+
+
+
 
 func isProofTypeRange(constraint []any) bool {
 	if len(constraint) != 3 {
@@ -181,3 +195,4 @@ func isProofTypeRange(constraint []any) bool {
 
 	return ok0 && ok1 && ok2
 }
+

@@ -1,19 +1,22 @@
 package zkp
 
 import (
+	"log"
 	"sort"
 	"testing"
-	"github.com/Suy56/ProofChain/storage/models"
+
+	"github.com/Suy56/ProofChain/internal/models"
 )
 
 func TestVerifyProof_Scenarios(t *testing.T) {
 	// 1. Setup Initial Data
-	input := models.CertificateData{
+	input := models.CertificateBase[any]{
 		Name:            "alice",
 		CertificateName: "Master of Engineering",
 		BirthDate:       "1990-01-01",
-		Address:         "123 Blockchain Ave",
-		Extra:           map[string]string{"MembershipID": "1225789"},
+		Address:         1,
+		Age: 		   	 23,
+		Extra:           map[string]any{"MembershipID": "1225789"},
 	}
 
 	merkle := NewMerkleProof()
@@ -21,7 +24,7 @@ func TestVerifyProof_Scenarios(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to generate root: %v", err)
 	}
-
+	log.Println("salted cert: ",saltedCert)
 	extractHashes := func(s SaltedCertificate) []Hash {
 		var h []Hash
 		var keys []string

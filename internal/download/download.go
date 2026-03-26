@@ -10,13 +10,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Suy56/ProofChain/internal/utils"
 	"github.com/Suy56/ProofChain/internal/models"
+	"github.com/Suy56/ProofChain/internal/utils"
 )
 
-
-
-// DownloadProof is the structure that holds the necessary data for reconstructing the proofs for each field. 
+// DownloadProof is the structure that holds the necessary data for reconstructing the proofs for each field.
 // It mirrors the CertificateData structure but with models.LeafFields values instead of plain strings.
 // Which is why we're using a generic base structure
 type DownloadProof = models.CertificateBase[models.LeafFields]
@@ -43,8 +41,10 @@ func NewDownloader(certificate []byte, logger *slog.Logger) (*Downloader, error)
 	if err != nil {
 		return nil, err
 	}
-	// Calculate the specific folder for this certificate
-	finalDir := filepath.Join(basePath, cert.CertificateName.Value)
+	val,ok:=cert.CertificateName.Value.(string);if !ok{
+		return nil, fmt.Errorf("invalid certificate name value of type %v", cert.CertificateName.Value)
+	}
+	finalDir := filepath.Join(basePath, val)
 
 	return &Downloader{
 		TargetDir: finalDir,
@@ -56,20 +56,48 @@ func NewDownloader(certificate []byte, logger *slog.Logger) (*Downloader, error)
 // Exec starts the download process for all fields in the ProofChain
 func (d *Downloader) Exec() error {
 	var errs []error
-
 	for k, v := range utils.Walk(d.ProofData) {
 		proofK := d.extractProofValues(k, v)
+		if k=="BirthDate"{
+
+		}
 		if err := d.store(k, proofK); err != nil {
 			d.logger.Error("Failed to store field proof", "field", k, "directory", d.TargetDir, "error", err)
 			errs = append(errs, err)
 			continue
 		}
-		d.logger.Info("Field proof saved", "field", k)
 	}
 	if len(errs) > 0 {
 		return fmt.Errorf("completed with %d failures", len(errs))
 	}
 	return nil
+}
+
+func (d *Downloader) extractProofValues(activeKey string, fullValue any) map[string]models.LeafFields {
+	slim := func(f models.LeafFields) models.LeafFields {
+		return models.LeafFields{Hash: f.Hash, Key: f.Key, Value: ""}
+	}
+
+	v := d.ProofData
+	result := map[string]models.LeafFields{
+		"Address":         slim(v.Address),
+		"Age":             slim(v.Age),
+		"BirthDate":       slim(v.BirthDate),
+		"CertificateName": slim(v.CertificateName),
+		"Name":            slim(v.Name),
+		"PublicAddress":   slim(v.PublicAddress),
+		"UniqueID":        slim(v.UniqueID),
+	}
+
+	for k, val := range v.Extra {
+
+		result[k] = slim(val)
+	}
+	hf, ok := fullValue.(models.LeafFields)
+	if ok {
+		result[activeKey] = hf
+	}
+	return result
 }
 
 func (d *Downloader) store(key string, proof any) error {
@@ -86,36 +114,9 @@ func (d *Downloader) store(key string, proof any) error {
 	return os.WriteFile(filename, data, 0644)
 }
 
-func (d *Downloader) extractProofValues(activeKey string, fullValue any) map[string]models.LeafFields {
-	slim := func(f models.LeafFields) models.LeafFields {
-		return models.LeafFields{Hash: f.Hash, Key: f.Key}
-	}
-
-	v := d.ProofData
-	result := map[string]models.LeafFields{
-		"Address":         slim(v.Address),
-		"Age":             slim(v.Age),
-		"BirthDate":       slim(v.BirthDate),
-		"CertificateName": slim(v.CertificateName),
-		"Name":            slim(v.Name),
-		"PublicAddress":   slim(v.PublicAddress),
-		"UniqueID":        slim(v.UniqueID),
-	}
-
-	for k, val := range v.Extra {
-		result[k] = slim(val)
-	}
-
-	hf, ok := fullValue.(models.LeafFields)
-	if ok {
-		result[activeKey] = hf
-	}
-	return result
-}
 
 func getDownloadDir() (string, error) {
 	var downloadDir string
-
 	// 1. Try Linux standard
 	cmd := exec.Command("xdg-user-dir", "DOWNLOAD")
 	var out bytes.Buffer
@@ -140,3 +141,4 @@ func getDownloadDir() (string, error) {
 
 	return finalPath, nil
 }
+

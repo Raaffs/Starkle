@@ -16,7 +16,7 @@ type SaltedCertificate struct {
 
 type ZKProof interface {
 	New() 
-	GenerateRootProof(c models.CertificateBase[string]) (Hash, SaltedCertificate, error)
+	GenerateRootProof(c models.CertificateBase[any]) (Hash, SaltedCertificate, error)
 }
 
 // Proof contains the components needed for a third-party verifier.
@@ -24,7 +24,7 @@ type ZKProof interface {
 type ProofVerification struct {
 	RootHash    Hash     `json:"root_hash"`    // The committed hash the verifier checks against
 	Attribute   string   `json:"attribute"`    // The name of the field being disclosed
-	Value       string   `json:"value"`        // The disclosed field value
+	Value       any   `json:"value"`        // The disclosed field value
 	Salt        string   `json:"salt"`         // The salt used to generate the leaf hash
 	MerkleProof []Hash   `json:"merkle_proof"` // The ordered list of sibling hashes for verification
 }
