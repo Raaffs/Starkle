@@ -12,7 +12,7 @@ func TestVerifyProof_Scenarios(t *testing.T) {
 	// 1. Setup Initial Data
 	input := models.CertificateBase[any]{
 		Name:            "alice",
-		CertificateName: "Master of Engineering",
+		CertificateName: "Master of Electrical and ElectronicsEngineering",
 		BirthDate:       "1990-01-01",
 		Address:         1,
 		Age: 		   	 23,

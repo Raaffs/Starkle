@@ -27,28 +27,30 @@ export namespace blockchain {
 
 export namespace models {
 	
-	export class CertificateData {
-	    certificateName: string;
-	    publicAddress: string;
-	    name: string;
+	export class CertificateBase_string_ {
 	    address: string;
 	    age: string;
 	    birthDate: string;
+	    certificateName: string;
+	    name: string;
+	    publicAddress: string;
 	    uniqueId: string;
+	    extra: Record<string, string>;
 	
 	    static createFrom(source: any = {}) {
-	        return new CertificateData(source);
+	        return new CertificateBase_string_(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.certificateName = source["certificateName"];
-	        this.publicAddress = source["publicAddress"];
-	        this.name = source["name"];
 	        this.address = source["address"];
 	        this.age = source["age"];
 	        this.birthDate = source["birthDate"];
+	        this.certificateName = source["certificateName"];
+	        this.name = source["name"];
+	        this.publicAddress = source["publicAddress"];
 	        this.uniqueId = source["uniqueId"];
+	        this.extra = source["extra"];
 	    }
 	}
 	export class Document {

@@ -126,3 +126,20 @@ func CoerceToInt(s string) (int, error) {
 
 	return -1, fmt.Errorf("value %q cannot be coerced to int", s)
 }
+
+func GetAttributeValue(obj any, fields ...string) any {
+	val := reflect.ValueOf(obj)
+
+	for _, field := range fields {
+		if val.Kind() == reflect.Ptr {
+			val = val.Elem()
+		}
+		val = val.FieldByName(field)
+		
+		if !val.IsValid() {
+			return nil
+		}
+	}
+	return val.Interface()
+}
+

@@ -16,34 +16,29 @@ import (
 
 // DownloadProof is the structure that holds the necessary data for reconstructing the proofs for each field.
 // It mirrors the CertificateData structure but with models.LeafFields values instead of plain strings.
-// Which is why we're using a generic base structure
 type DownloadProof = models.CertificateBase[models.LeafFields]
 
-// Downloader manages the lifecycle of exporting proof files
 type Downloader struct {
 	TargetDir string
 	ProofData DownloadProof
 	logger    *slog.Logger
 }
 
-type certificateWrapper struct {
-	SaltedFields DownloadProof `json:"salted_fields"`
-}
-
-// NewDownloader initializes the downloader, determines the path, and unmarshals the data
 func NewDownloader(certificate []byte, logger *slog.Logger) (*Downloader, error) {
-	var wrapper certificateWrapper
-	if err := json.Unmarshal(certificate, &wrapper); err != nil {
+	var cert models.CertificateBase[models.LeafFields]
+
+	if err := json.Unmarshal(certificate, &cert); err != nil {
 		return nil, fmt.Errorf("could not decode certificate proof: %w", err)
 	}
-	cert := wrapper.SaltedFields
 	basePath, err := getDownloadDir()
 	if err != nil {
 		return nil, err
 	}
+
 	val,ok:=cert.CertificateName.Value.(string);if !ok{
-		return nil, fmt.Errorf("invalid certificate name value of type %v", cert.CertificateName.Value)
+		return nil, fmt.Errorf("invalid certificate name value. Expected: string got %v", cert.CertificateName.Value)
 	}
+
 	finalDir := filepath.Join(basePath, val)
 
 	return &Downloader{
@@ -53,14 +48,10 @@ func NewDownloader(certificate []byte, logger *slog.Logger) (*Downloader, error)
 	}, nil
 }
 
-// Exec starts the download process for all fields in the ProofChain
 func (d *Downloader) Exec() error {
 	var errs []error
 	for k, v := range utils.Walk(d.ProofData) {
 		proofK := d.extractProofValues(k, v)
-		if k=="BirthDate"{
-
-		}
 		if err := d.store(k, proofK); err != nil {
 			d.logger.Error("Failed to store field proof", "field", k, "directory", d.TargetDir, "error", err)
 			errs = append(errs, err)
@@ -90,7 +81,6 @@ func (d *Downloader) extractProofValues(activeKey string, fullValue any) map[str
 	}
 
 	for k, val := range v.Extra {
-
 		result[k] = slim(val)
 	}
 	hf, ok := fullValue.(models.LeafFields)

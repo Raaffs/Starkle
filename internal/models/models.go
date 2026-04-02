@@ -3,7 +3,7 @@ package models
 type Hash string
 
 type LeafFields struct {
-	Hash  Hash   `json:"hash"` // The salted hash of the value
+	Hash  Hash   `json:"hash"`
 	Key   string `json:"key"`
 	Value any    `json:"value"`
 	Salt  string `json:"salt"`
@@ -20,3 +20,8 @@ type CertificateBase[T any] struct {
     Extra           map[string]T `json:"extra" bson:",inline"`
 }
 
+
+func (CertificateBase[T])Walk()T{
+    var t T
+    return t
+}

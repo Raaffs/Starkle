@@ -8,7 +8,6 @@ import (
 	"github.com/Suy56/ProofChain/internal/models"
 )
 
-// MerkleProof implements the ZKProof interface and holds the committed data state.
 type MerkleProof struct {
 	RootHash   Hash
 	FieldLeaves map[string]models.LeafFields // Map for O(1) lookup during Disclosure
@@ -27,7 +26,8 @@ func (id *MerkleProof) New()  {
 	id.LeafHashes = make([]Hash, 0)
 }
 
-// GenerateRootProof (Issuer side)
+
+//Merkle Proof is generated on issuer's side and root of merkle tree is anchored on chain
 func (id *MerkleProof) GenerateRootProof(c models.CertificateBase[any]) (Hash, SaltedCertificate, error) {
 	saltedCert, err := SaltCertificate(c)
 	if err != nil {
@@ -43,7 +43,6 @@ func (id *MerkleProof) GenerateRootProof(c models.CertificateBase[any]) (Hash, S
 	id.FieldLeaves = saltedCert.SaltedFields
 	id.LeafHashes = make([]Hash, 0, len(keys))
 
-	//  Build the ordered LeafHashes list
 	for _, key := range keys {
 		leaf := id.FieldLeaves[key]
 		id.LeafHashes = append(id.LeafHashes, Hash(leaf.Hash))
@@ -51,7 +50,7 @@ func (id *MerkleProof) GenerateRootProof(c models.CertificateBase[any]) (Hash, S
 
 	id.RootHash = calculateMerkleRoot(id.LeafHashes)
 
-	// The Issuer sends the Root Hash (to Blockchain) and the SaltedCertificate (to Requestor)
+	//salted certificate is sent to requestor 
 	return id.RootHash, saltedCert, nil
 }
 
@@ -67,7 +66,9 @@ func VerifyProof(p ProofVerification, expectedRoot Hash) bool {
 		// No conversion needed for string values
 		disclosedLeafHash = HashData([]byte(v), []byte(p.Salt))
 	case int:
-		// Convert int to byte slice for hashing
+	// We cast to uint32 and use Little Endian to maintain parity with the Rust implementation.
+	// The range-prover in Rust serializes integers as 4-byte Little Endian values 
+	// before hashing, so the byte representation must be identical here.
 		buf := make([]byte, 4)
 		binary.LittleEndian.PutUint32(buf, uint32(v))
 	default:
@@ -79,16 +80,14 @@ func VerifyProof(p ProofVerification, expectedRoot Hash) bool {
     found := slices.Contains(p.MerkleProof, disclosedLeafHash)
     
     if !found {
-        // If the hash isn't in the list, the user is passing invalid proof 
         return false 
     }
 
     calculatedRoot := calculateMerkleRoot(p.MerkleProof)
 
-    return calculatedRoot == expectedRoot && calculatedRoot == p.RootHash
+    return calculatedRoot == expectedRoot
 }
 
-// calculateMerkleRoot calculates the root hash from an ordered list of leaf hashes.
 func calculateMerkleRoot(leaves []Hash) Hash {
 	if len(leaves) == 0 {
 		return ""

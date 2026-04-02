@@ -3,7 +3,7 @@
 import {models} from '../models';
 import {blockchain} from '../models';
 
-export function CreateDigitalCopy(arg1:number,arg2:string,arg3:models.CertificateData):Promise<void>;
+export function CreateDigitalCopy(arg1:number,arg2:string,arg3:models.CertificateBase_string_):Promise<string>;
 
 export function Download(arg1:string,arg2:string,arg3:string):Promise<string>;
 
@@ -23,13 +23,13 @@ export function IsApprovedInstitute():Promise<boolean>;
 
 export function IsLoggedIn():Promise<boolean>;
 
-export function IssueCertificate(arg1:models.CertificateData):Promise<void>;
+export function IssueCertificate(arg1:models.CertificateBase_string_):Promise<string>;
 
 export function Login(arg1:string,arg2:string):Promise<void>;
 
 export function Logout():Promise<void>;
 
-export function PrepareDigitalCopy(arg1:models.CertificateData):Promise<models.Document>;
+export function PrepareDigitalCopy(arg1:models.CertificateBase_string_):Promise<models.Document>;
 
 export function Register(arg1:string,arg2:string,arg3:string,arg4:boolean):Promise<void>;
 

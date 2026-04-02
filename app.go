@@ -13,6 +13,9 @@ import (
 	"github.com/Suy56/ProofChain/internal/crypto/keyUtils"
 	"github.com/Suy56/ProofChain/internal/crypto/zkp"
 	"github.com/Suy56/ProofChain/internal/download"
+	mo "github.com/Suy56/ProofChain/internal/models"
+
+	// mo "github.com/Suy56/ProofChain/internal/models"
 	"github.com/Suy56/ProofChain/internal/users"
 	"github.com/Suy56/ProofChain/internal/utils"
 	"github.com/Suy56/ProofChain/internal/wallet"
@@ -277,6 +280,29 @@ func (app *App) UploadDocument(institute, name, description string) error {
 	return nil
 }
 
+func (app *App) GetAllDocs() ([]blockchain.VerificationDocument, error) {
+	var userDocs []blockchain.VerificationDocument
+	docs, err := app.account.GetDocuments()
+	if err != nil {
+		app.logger.Error(
+			"Error getAllDocs",
+			"gas limit", app.account.GetTxOpts().GasLimit,
+			"gas price", app.account.GetTxOpts().GasPrice,
+			"err", err,
+		)
+		return nil, fmt.Errorf("error retrieving documents")
+	}
+
+	for i := range docs {
+		if docs[i].Institute != app.account.GetName() && docs[i].Requester != app.account.GetTxOpts().From.Hex() {
+			continue
+		}
+		userDocs = append(userDocs, docs[i])
+	}
+	return userDocs, nil
+
+}
+
 func (app *App) GetAcceptedDocs() ([]blockchain.VerificationDocument, error) {
 	docs, err := app.account.GetDocuments()
 	if err != nil {
@@ -307,18 +333,18 @@ func (app *App) GetPendingDocuments() ([]blockchain.VerificationDocument, error)
 	return pendingDocs, nil
 }
 
-func (app *App) CreateDigitalCopy(status int, hash string, certificate models.CertificateData) error {
+func (app *App) CreateDigitalCopy(status int, hash string, certificate models.CertificateData) (string,error) {
 	if err := users.UpdateNonce(app.account); err != nil {
 		app.logger.Error(
 			"Invalid transaction nonce",
 			"nonce",app.account.GetClient().TxOpts.Nonce,
 			"err", err,
 		)
-		return err
+		return "",err
 	}
 	_, ok := app.account.(*users.Verifier)
 	if !ok {
-		return fmt.Errorf("You're not approved to perform this action")
+		return "",fmt.Errorf("You're not approved to perform this action")
 	}
 
 	switch status {
@@ -332,22 +358,22 @@ func (app *App) CreateDigitalCopy(status int, hash string, certificate models.Ce
 				hash,
 			); err != nil {
 			app.logger.Error("Error approving document (rejection path)","err", err)
-			return fmt.Errorf("An error occurred ")
+			return "",fmt.Errorf("An error occurred ")
 		}
-		return nil
+		return "rejected successfully",nil
 
 	case blockchain.Pending:
-		return nil
+		return "",nil
 	}
 	doc, publicCommit, err := app.PrepareDigitalCopy(certificate)
 	if err != nil {
 		app.logger.Error("Error preparing digital copy","err", err)
-		return fmt.Errorf("An error occurred while issuing document")
+		return "",fmt.Errorf("An error occurred while issuing document")
 	}
 
 	if err := app.storage.UploadDocument(doc); err != nil {
 		app.logger.Error("Error uploading certificate to storage","err", err)
-		return fmt.Errorf("Error creating certificate")
+		return "",fmt.Errorf("Error creating certificate")
 	}
 
 	if _, err := app.account.GetInstance().Instance.VerifyDocument(
@@ -358,24 +384,24 @@ func (app *App) CreateDigitalCopy(status int, hash string, certificate models.Ce
 		publicCommit,
 	); err != nil {
 		app.logger.Error("Error verifying document on blockchain","err", err)
-		return nil
+		return "",fmt.Errorf("An error occurred while issuing document")
 	}
-	return nil
+	return "document issued successfully",nil
 }
 
-func (app *App) IssueCertificate(certificate models.CertificateData) error {
+func (app *App) IssueCertificate(certificate models.CertificateData) (msg string, err error) {
     if err := users.UpdateNonce(app.account); err != nil {
         app.logger.Error(
             "Invalid transaction nonce",
 			"nonce",app.account.GetTxOpts().Nonce,
             "err", err,
         )
-        return err
+        return "",err
     }
-    doc, publicCommit, err := app.PrepareDigitalCopy(certificate)
+    cert, publicCommit, err := app.PrepareDigitalCopy(certificate)
     if err != nil {
         app.logger.Error("Error preparing digital copy","err", err)
-        return fmt.Errorf("An error occurred while issuing certificate")
+        return "",fmt.Errorf("An error occurred while issuing certificate")
     }
     if _, err := app.account.GetInstance().Instance.AddCertificate(
         app.account.GetTxOpts(),
@@ -384,13 +410,13 @@ func (app *App) IssueCertificate(certificate models.CertificateData) error {
         common.HexToAddress(certificate.PublicAddress),
     ); err != nil {
         app.logger.Error("Error adding certificate to blockchain","err", err)
-        return fmt.Errorf("an error occurred while issuing certificate")
+        return "",fmt.Errorf("an error occurred while issuing certificate")
     }
-    if err := app.storage.UploadDocument(doc); err != nil {
+    if err := app.storage.UploadDocument(cert); err != nil {
         app.logger.Error("Error uploading document to storage","err", err)
-        return fmt.Errorf("Error issuing certificate")
+        return "",fmt.Errorf("Error issuing certificate")
     }
-    return nil
+    return "certificate issued successfully",nil
 }
 
 func (app *App) ViewDocument(shahash, instituteName, requesterAddress string) (string, error) {
@@ -447,9 +473,26 @@ func (app *App) Download(hash, instituteName, requesterAddress string) (string, 
         )
         return "", fmt.Errorf("an error occurred while downloading")
     }
-
-	downloader, err := download.NewDownloader(decryptedCert, NewLogger(os.Stdout))
+	wrapper:= struct {
+    	SaltedFields mo.CertificateBase[mo.LeafFields] `json:"salted_fields"`
+	}{}
+	if err := json.Unmarshal(decryptedCert, &wrapper); err != nil {
+    	app.logger.Error("error unmarshaling", "err", err.Error())
+    	return "", fmt.Errorf("Error Downloading")
+	}
+	t:=wrapper.SaltedFields
+	t=mapToCertificateBase[mo.LeafFields,mo.LeafFields](t)
+	inputBytes,err:=json.Marshal(t);if err!=nil{
+		app.logger.Error(
+			"error marshaling certificate while downloading",
+			"err",err.Error(),
+		)
+		return "",fmt.Errorf("Error Downloading")
+	}
+	
+	downloader, err := download.NewDownloader(inputBytes, NewLogger(os.Stdout))
 	if err != nil {
+		log.Println("error downloading: ",err)
 		app.logger.Error("error creating new downloader","err", err)
 		return "", fmt.Errorf("an error occurred while downloading")
 	}
@@ -460,16 +503,36 @@ func (app *App) Download(hash, instituteName, requesterAddress string) (string, 
 	return "Downloaded successfully", nil
 }
 
-func (app *App) GenerateZKP(hash, instituteName, requesterAddress string, publicConstraint []any )(string, error){
-	decryptedCert, err := app.getDecryptedCertificate(hash, instituteName, requesterAddress)
-    if err != nil {
-        app.logger.Error(
-            "An error occurred while downloading/decrypting certificate",
-            "hash", hash,
-            "err", err,
-        )
-        return "", fmt.Errorf("an error occurred while downloading")
-    }
-	log.Println(decryptedCert)
-	return "proof generated successfully",nil
-}
+// func (app *App) GenerateZKP(hash, instituteName, requesterAddress string, publicConstraint []any )(string, error){
+// 	decryptedCert, err := app.getDecryptedCertificate(hash, instituteName, requesterAddress)
+//     if err != nil {
+//         app.logger.Error(
+//             "An error occurred while downloading/decrypting certificate",
+//             "hash", hash,
+//             "err", err,
+//         )
+//         return "", fmt.Errorf("an error occurred while downloading")
+//     }
+// 	wrapper:= struct {
+// 		SaltedFields mo.CertificateBase[mo.LeafFields] `json:"salted_fields"`
+// 	}{}
+
+// 	if err := json.Unmarshal(decryptedCert, &wrapper); err != nil {
+// 		return "", fmt.Errorf("could not decode certificate proof: %w", err)
+// 	}
+
+// 	cert := wrapper.SaltedFields
+// 	attribute,ok:=publicConstraint[0].(string); if !ok{
+// 		app.logger.Error(
+// 			"Failed to convert attribute to type string",
+// 			"attribute",attribute,
+// 		)
+// 		return "",fmt.Errorf("invalid public constraints")
+// 	}
+// 	publicRoot:=publicConstraint[1]
+	
+// 	value:=utils.GetAttributeValue(cert,attribute,"Value")
+// 	salt:=utils.GetAttributeValue(cert,attribute,"Salt")
+
+// 	return "proof generated successfully",nil
+// }

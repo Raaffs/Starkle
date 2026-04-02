@@ -20,8 +20,7 @@ func SaltCertificate(c models.CertificateBase[any]) (SaltedCertificate, error) {
 	var keys []string
 
 	for k, v := range utils.Walk(c) {
-		strVal := fmt.Sprint(v)
-		fieldMap[k] = strVal
+		fieldMap[k] = v
 		keys = append(keys, k)
 	}
 

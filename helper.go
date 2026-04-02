@@ -100,31 +100,18 @@ func (app *App)IsApprovedInstitute()bool{
 
 func (app *App)PrepareDigitalCopy(certificate models.CertificateData)(models.Document,string,error){
 	proof:=zkp.NewMerkleProof()
-	var typedCert mo.CertificateBase[any]
-	vCert := reflect.ValueOf(&typedCert).Elem()
-
-	for k, v := range utils.Walk(certificate) {
-	    field := vCert.FieldByName(k)
-	    if !field.IsValid() || !field.CanSet() {
-	        continue
-	    }
-	    if val, err := utils.CoerceToInt(fmt.Sprint(v)); err == nil {
-	        field.SetInt(int64(val))
-	    } else {
-	        field.Set(reflect.ValueOf(v))
-	    }
-	}
-
+	typedCert := mapToCertificateBase[string,any](certificate)
 	publicCommit,saltedCertificate,err:=proof.GenerateRootProof(typedCert);if err!=nil{
 		app.logger.Error(
 			"error generating proof",
-			"err",err,
+			"err",err.Error(),
 		)
 		return models.Document{},"",fmt.Errorf("an error occurred while issuing certificate")
 	}
-
 	json, err := json.Marshal(saltedCertificate);if err!=nil{
 		app.logger.Error("Error Marshalling salted certificate", "err", err)
+		 log.Println(err)
+
 		return models.Document{},"",fmt.Errorf("invalid certificate format")
 	}
 	encryptedCertificate,err:=app.Encrypt(json,certificate.PublicAddress);if err!=nil{
@@ -158,6 +145,40 @@ func (app *App) getDecryptedCertificate(hash, instituteName, requesterAddress st
 
     return decryptedCert, nil
 }
+
+
+//this is insane, and should never be done again. NOT DRYing is fine if it avoids this monstrosity
+//I just wanted to see how'd it work, so I did it but I'd never use this in actual prod
+
+//We're initializing input and output of mo.CertificateBase[] differently because when the issuer
+//inputs the fields it's of type mo.CertificateBase[string] but to generate merkle proof we need to 
+//store the associate salt and hash in type of struct mo.LeafField, and all methods associated with proof
+//generation requires mo.CertificateBase[mo.LeafField] or mo.CertificateBase[any]
+
+
+//The attempted coercion of string to int is done so that any attributes 
+//that needs zk-proof of range (such as date or salary) needs to be in format of LittleEndian UInt32
+//but to keep schema flexible, issuer basically uses a map[string]string, so we need to dynamically figure out
+//which attributes are compatible with zk-proof of range instead of needing the user to 
+// specifiy which proof the want 
+//to generate 
+func mapToCertificateBase[T any, U any](certificate mo.CertificateBase[T]) mo.CertificateBase[U] {
+    var typedCert mo.CertificateBase[U]
+    vCert := reflect.ValueOf(&typedCert).Elem()
+    for k, v := range utils.Walk(certificate) {
+        field := vCert.FieldByName(k)
+        if !field.IsValid() || !field.CanSet() {
+            continue
+        }
+        if val, err := utils.CoerceToInt(fmt.Sprint(v)); err == nil {
+            field.Set(reflect.ValueOf(val))
+        } else {
+            field.Set(reflect.ValueOf(v))
+        }
+    }
+    return typedCert
+}
+
 
 // func(app *App) PrepareProofInputs(certificate mo.CertificateBase[mo.LeafFields], publicConstraints []any)(string,error){
 // 	privateInputField:=publicConstraints[0].(string)
