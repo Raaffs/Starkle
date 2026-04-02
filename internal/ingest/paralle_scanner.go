@@ -13,7 +13,7 @@ type FileProcessor struct {
 	MaxWorkers int
 }
 
-func New(maxWorkers int) *FileProcessor {
+func NewParallel(maxWorkers int) *FileProcessor {
 	if maxWorkers <= 0 {
 		maxWorkers = 5
 	}
@@ -28,7 +28,7 @@ func (f *FileProcessor)Discover(ctx context.Context, path string, cmp Comparator
 	var files []string
 
 	for _, entry := range entries {
-		if !entry.IsDir() && filepath.Ext(entry.Name())!=".json" {
+		if !entry.IsDir() && filepath.Ext(entry.Name())==".json" {
 			files = append(files, filepath.Join(path, entry.Name()))
 		}	
 	}

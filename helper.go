@@ -179,7 +179,6 @@ func mapToCertificateBase[T any, U any](certificate mo.CertificateBase[T]) mo.Ce
     return typedCert
 }
 
-
 // func(app *App) PrepareProofInputs(certificate mo.CertificateBase[mo.LeafFields], publicConstraints []any)(string,error){
 // 	privateInputField:=publicConstraints[0].(string)
 // 	mapper:= make(map[string]mo.LeafFields,0)
