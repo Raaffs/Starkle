@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -108,6 +109,16 @@ func FormatDateToInt(date string) (int, error) {
 	return res, nil
 }
 
+func isCurrency(input string) bool {
+	// Pattern: Starts with 1-3 digits, followed by zero or more groups of (comma + 3 digits)
+	// and an optional decimal suffix (.xx)
+	const pattern = `^\d{1,3}(,\d{3})*(\.\d{2})?$`
+	
+	// Compile the regex
+	re := regexp.MustCompile(pattern)
+	
+	return re.MatchString(input)
+}
 // It supports direct numeric strings and YYYY-MM-DD date formats.
 func CoerceToInt(s string) (int, error) {
 	s = strings.TrimSpace(s) // Clean up any stray whitespace first
@@ -123,23 +134,48 @@ func CoerceToInt(s string) (int, error) {
 		// Format to "20060102" then convert that string to int
 		return t,nil
 	}
+	// 3. Check if it's a currency format (e.g., "1,234" -> 1234)
+	if isCurrency(s) {
+		cleaned := strings.ReplaceAll(s, ",", "")
+		if val, err := strconv.Atoi(cleaned); err == nil {
+			return val, nil
+		}
+	}
 
 	return -1, fmt.Errorf("value %q cannot be coerced to int", s)
 }
 
-func GetAttributeValue(obj any, fields ...string) any {
+func GetAttributeValue(obj any, fields ...string) (any, error) {
 	val := reflect.ValueOf(obj)
 
 	for _, field := range fields {
-		if val.Kind() == reflect.Ptr {
+		// 1. Handle Pointers: Dereference until we find the actual value
+		for val.Kind() == reflect.Ptr || val.Kind() == reflect.Interface {
+			if val.IsNil() {
+				return nil, fmt.Errorf("encountered nil pointer while looking for field '%s'", field)
+			}
 			val = val.Elem()
 		}
+
+		// 2. Ensure we are looking at a Struct
+		if val.Kind() != reflect.Struct {
+			return nil, fmt.Errorf("cannot get field '%s' from non-struct type %s", field, val.Type())
+		}
+
+		// 3. Find the field
 		val = val.FieldByName(field)
-		
+
+		// 4. Check if field exists
 		if !val.IsValid() {
-			return nil
+			return nil, fmt.Errorf("field '%s' does not exist in struct", field)
+		}
+
+		// 5. Check for unexported fields (private fields)
+		// val.Interface() panics if the field is not exported.
+		if !val.CanInterface() {
+			return nil, fmt.Errorf("field '%s' is unexported and cannot be accessed", field)
 		}
 	}
-	return val.Interface()
-}
 
+	return val.Interface(), nil
+}

@@ -1,10 +1,9 @@
-package main
+package rpc
 
 import (
 	"context"
 	"time"
-	pb "zkRPC/proto"
-
+	pb "github.com/Suy56/ProofChain/internal/crypto/zkp/rpc/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
@@ -61,7 +60,6 @@ func (c *ZKProverClient) RequestMembershipProof(
 			},
 		},
 	}
-
 	return c.client.GenerateProof(ctx, req)
 }
 

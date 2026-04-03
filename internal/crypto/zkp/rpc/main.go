@@ -1,4 +1,4 @@
-package main
+package rpc
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	pb "zkRPC/proto" 
+	pb "github.com/Suy56/ProofChain/internal/crypto/zkp/rpc/proto"
 )
 
 func main() {

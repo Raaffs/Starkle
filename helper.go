@@ -179,6 +179,22 @@ func mapToCertificateBase[T any, U any](certificate mo.CertificateBase[T]) mo.Ce
     return typedCert
 }
 
+func NormalizeCertificateSchema(decryptedCert []byte) (mo.CertificateBase[mo.LeafFields], error) {
+    // Define the schema wrapper
+    wrapper := struct {
+        SaltedFields mo.CertificateBase[mo.LeafFields] `json:"salted_fields"`
+    }{}
+
+    // Unmarshal the raw data
+    if err := json.Unmarshal(decryptedCert, &wrapper); err != nil {
+        return mo.CertificateBase[mo.LeafFields]{}, fmt.Errorf("failed to unmarshal: %w", err)
+    }
+
+    // Apply the mapping transformation
+    t := mapToCertificateBase[mo.LeafFields, mo.LeafFields](wrapper.SaltedFields)
+
+    return t, nil
+}
 // func(app *App) PrepareProofInputs(certificate mo.CertificateBase[mo.LeafFields], publicConstraints []any)(string,error){
 // 	privateInputField:=publicConstraints[0].(string)
 // 	mapper:= make(map[string]mo.LeafFields,0)

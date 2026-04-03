@@ -24,26 +24,21 @@ type Downloader struct {
 	logger    *slog.Logger
 }
 
-func NewDownloader(certificate []byte, logger *slog.Logger) (*Downloader, error) {
-	var cert models.CertificateBase[models.LeafFields]
-
-	if err := json.Unmarshal(certificate, &cert); err != nil {
-		return nil, fmt.Errorf("could not decode certificate proof: %w", err)
-	}
+func NewDownloader(certificate DownloadProof, logger *slog.Logger) (*Downloader, error) {
 	basePath, err := getDownloadDir()
 	if err != nil {
 		return nil, err
 	}
 
-	val,ok:=cert.CertificateName.Value.(string);if !ok{
-		return nil, fmt.Errorf("invalid certificate name value. Expected: string got %v", cert.CertificateName.Value)
+	val,ok:=certificate.CertificateName.Value.(string);if !ok{
+		return nil, fmt.Errorf("invalid certificate name value. Expected: string got %v", certificate.CertificateName.Value)
 	}
 
 	finalDir := filepath.Join(basePath, val)
 
 	return &Downloader{
 		TargetDir: finalDir,
-		ProofData: cert,
+		ProofData: certificate,
 		logger:    logger,
 	}, nil
 }

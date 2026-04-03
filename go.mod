@@ -1,21 +1,25 @@
 module github.com/Suy56/ProofChain
 
-go 1.23.0
+go 1.24.0
 
 require (
 	github.com/ethereum/go-ethereum v1.13.14
 	github.com/wailsapp/wails/v2 v2.10.2
 )
 
-require github.com/gtank/cryptopasta v0.0.0-20170601214702-1f550f6f2f69
+require (
+	github.com/gtank/cryptopasta v0.0.0-20170601214702-1f550f6f2f69
+	google.golang.org/grpc v1.80.0
+)
 
-require google.golang.org/protobuf v1.30.0 // indirect
+require google.golang.org/protobuf v1.36.11
 
 require (
 	github.com/klauspost/compress v1.16.4 // indirect
 	github.com/prometheus/client_golang v1.14.0 // indirect
 	github.com/prometheus/common v0.42.0 // indirect
 	github.com/prometheus/procfs v0.9.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260120221211-b8f7ae30c516 // indirect
 )
 
 require (
@@ -60,13 +64,13 @@ require (
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/wailsapp/go-webview2 v1.0.19 // indirect
 	github.com/wailsapp/mimetype v1.4.1 // indirect
-	golang.org/x/crypto v0.35.0
+	golang.org/x/crypto v0.47.0
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa // indirect
-	golang.org/x/mod v0.23.0 // indirect
-	golang.org/x/net v0.35.0 // indirect
-	golang.org/x/sync v0.11.0
-	golang.org/x/sys v0.30.0 // indirect
-	golang.org/x/text v0.22.0 // indirect
-	golang.org/x/tools v0.30.0 // indirect
+	golang.org/x/mod v0.31.0 // indirect
+	golang.org/x/net v0.49.0 // indirect
+	golang.org/x/sync v0.19.0
+	golang.org/x/sys v0.40.0 // indirect
+	golang.org/x/text v0.33.0 // indirect
+	golang.org/x/tools v0.40.0 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )

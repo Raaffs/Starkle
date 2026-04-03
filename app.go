@@ -14,8 +14,8 @@ import (
 	"github.com/Suy56/ProofChain/internal/crypto/zkp"
 	"github.com/Suy56/ProofChain/internal/download"
 	mo "github.com/Suy56/ProofChain/internal/models"
+	proverRPC "github.com/Suy56/ProofChain/internal/crypto/zkp/rpc"
 
-	// mo "github.com/Suy56/ProofChain/internal/models"
 	"github.com/Suy56/ProofChain/internal/users"
 	"github.com/Suy56/ProofChain/internal/utils"
 	"github.com/Suy56/ProofChain/internal/wallet"
@@ -473,24 +473,23 @@ func (app *App) Download(hash, instituteName, requesterAddress string) (string, 
         )
         return "", fmt.Errorf("an error occurred while downloading")
     }
-	wrapper:= struct {
-    	SaltedFields mo.CertificateBase[mo.LeafFields] `json:"salted_fields"`
-	}{}
+
+	var wrapper struct {
+		SaltedFields mo.CertificateBase[mo.LeafFields] `json:"salted_fields"`
+	}
+
 	if err := json.Unmarshal(decryptedCert, &wrapper); err != nil {
-    	app.logger.Error("error unmarshaling", "err", err.Error())
-    	return "", fmt.Errorf("Error Downloading")
-	}
-	t:=wrapper.SaltedFields
-	t=mapToCertificateBase[mo.LeafFields,mo.LeafFields](t)
-	inputBytes,err:=json.Marshal(t);if err!=nil{
 		app.logger.Error(
-			"error marshaling certificate while downloading",
-			"err",err.Error(),
+			"Error unmarshaling decrypted certificate",
+			"hash", hash,
+			"institute", instituteName,
+			"req addr", requesterAddress,
+			"err", err,
 		)
-		return "",fmt.Errorf("Error Downloading")
+		return "", fmt.Errorf("an error occurred while downloading")
 	}
-	
-	downloader, err := download.NewDownloader(inputBytes, NewLogger(os.Stdout))
+
+	downloader, err := download.NewDownloader(wrapper.SaltedFields, NewLogger(os.Stdout))
 	if err != nil {
 		log.Println("error downloading: ",err)
 		app.logger.Error("error creating new downloader","err", err)
@@ -503,36 +502,87 @@ func (app *App) Download(hash, instituteName, requesterAddress string) (string, 
 	return "Downloaded successfully", nil
 }
 
-// func (app *App) GenerateZKP(hash, instituteName, requesterAddress string, publicConstraint []any )(string, error){
-// 	decryptedCert, err := app.getDecryptedCertificate(hash, instituteName, requesterAddress)
-//     if err != nil {
-//         app.logger.Error(
-//             "An error occurred while downloading/decrypting certificate",
-//             "hash", hash,
-//             "err", err,
-//         )
-//         return "", fmt.Errorf("an error occurred while downloading")
-//     }
-// 	wrapper:= struct {
-// 		SaltedFields mo.CertificateBase[mo.LeafFields] `json:"salted_fields"`
-// 	}{}
+func (app *App) GenerateZKP(hash, instituteName, requesterAddress string, publicConstraint []string )(string, error){
+	decryptedCert, err := app.getDecryptedCertificate(hash, instituteName, requesterAddress)
+    if err != nil {
+        app.logger.Error(
+            "An error occurred while downloading/decrypting certificate",
+            "hash", hash,
+            "err", err,
+        )
+        return "", fmt.Errorf("an error occurred while downloading")
+    }
+	wrapper:= struct {
+		SaltedFields mo.CertificateBase[mo.LeafFields] `json:"salted_fields"`
+	}{}
 
-// 	if err := json.Unmarshal(decryptedCert, &wrapper); err != nil {
-// 		return "", fmt.Errorf("could not decode certificate proof: %w", err)
-// 	}
+	if err := json.Unmarshal(decryptedCert, &wrapper); err != nil {
+		return "", fmt.Errorf("could not decode certificate proof: %w", err)
+	}
 
-// 	cert := wrapper.SaltedFields
-// 	attribute,ok:=publicConstraint[0].(string); if !ok{
-// 		app.logger.Error(
-// 			"Failed to convert attribute to type string",
-// 			"attribute",attribute,
-// 		)
-// 		return "",fmt.Errorf("invalid public constraints")
-// 	}
-// 	publicRoot:=publicConstraint[1]
+	cert := wrapper.SaltedFields
+	attribute:=publicConstraint[0]
 	
-// 	value:=utils.GetAttributeValue(cert,attribute,"Value")
-// 	salt:=utils.GetAttributeValue(cert,attribute,"Salt")
+	value,err:=utils.GetAttributeValue(cert,attribute,"Value"); if err!=nil {
+		app.logger.Error(
+			"Failed to get attribute value",
+			"attribute",attribute,
+			"err", err,
+		)
+		return "",fmt.Errorf("invalid public constraints")
+	}
+	
+	salt,err:=utils.GetAttributeValue(cert,attribute,"Salt"); if err!=nil {
+		app.logger.Error(
+			"Failed to get attribute salt",
+			"attribute",attribute,
+			"err", err,
+		)
+		return "",fmt.Errorf("invalid public constraints")
+	}
 
-// 	return "proof generated successfully",nil
-// }
+	var allLeavesHashes []string
+
+	for _, v := range utils.Walk(cert) {
+		hash,err:=utils.GetAttributeValue(v.(mo.LeafFields),"Hash"); if err!=nil {
+			app.logger.Error(
+				"Failed to get leaf hash",
+				"leaf",v,
+				"err", err,
+			)
+			return "",fmt.Errorf("invalid certificate structure")
+		}
+		h,ok:=hash.(string); if !ok{
+			app.logger.Error(
+				"Failed to assert hash to string",
+				"hash",hash,
+			)
+			return "",fmt.Errorf("invalid certificate structure")
+		}
+		allLeavesHashes = append(allLeavesHashes, h)
+	}
+
+	prover,err:= proverRPC.NewZKProverClient("localhost:50051"); if err!=nil{
+		app.logger.Error(
+			"Failed to connect to the prover service",
+			"err", err,
+		)
+		return "",fmt.Errorf("could not connect to the proof generation service")
+	}
+
+	val,ok:=value.(string);if !ok{
+		log.Println("fuck you")
+		return "",fmt.Errorf("invalid value type in certificate")
+	}
+
+	prover.RequestMembershipProof(
+		app.ctx,
+		val,
+		salt.(string),
+		allLeavesHashes,
+		publicConstraint[1:],
+		"",
+	)
+
+	return "proof generated successfully",nil
+}

@@ -45,7 +45,7 @@ fn main() {
     let salt_hex: String = env::read();
     let all_leaves_hex: Vec<String> = env::read();
     let public_list: Vec<String> = env::read();
-    let public_root: Digest = env::read();
+    // let public_root: Digest = env::read();
 
     // Public List Check
     assert!(public_list.iter().any(|x| x == &value), "Value not in public list");
@@ -86,8 +86,7 @@ fn main() {
 
     let final_root_bytes = decode_hex(&current_level[0]);
     let final_root_digest = Digest::try_from(final_root_bytes.as_slice()).unwrap();
-    assert_eq!(final_root_digest, public_root, "Merkle Root mismatch");
 
     env::commit(&public_list);
-    env::commit(&public_root);
+    env::commit(&final_root_digest);
 }
