@@ -181,7 +181,7 @@ func (x *MembershipRequest) GetPublicRoot() string {
 
 type RangeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ActualValue   string                 `protobuf:"bytes,1,opt,name=actual_value,json=actualValue,proto3" json:"actual_value,omitempty"`
+	ActualValue   uint32                 `protobuf:"varint,1,opt,name=actual_value,json=actualValue,proto3" json:"actual_value,omitempty"`
 	ActualSalt    string                 `protobuf:"bytes,2,opt,name=actual_salt,json=actualSalt,proto3" json:"actual_salt,omitempty"` // Hex string
 	AllLeaves     []string               `protobuf:"bytes,3,rep,name=all_leaves,json=allLeaves,proto3" json:"all_leaves,omitempty"`    // Hex strings
 	LowerBound    uint32                 `protobuf:"varint,4,opt,name=lower_bound,json=lowerBound,proto3" json:"lower_bound,omitempty"`
@@ -221,11 +221,11 @@ func (*RangeRequest) Descriptor() ([]byte, []int) {
 	return file_proto_prover_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *RangeRequest) GetActualValue() string {
+func (x *RangeRequest) GetActualValue() uint32 {
 	if x != nil {
 		return x.ActualValue
 	}
-	return ""
+	return 0
 }
 
 func (x *RangeRequest) GetActualSalt() string {
@@ -450,7 +450,7 @@ const file_proto_prover_proto_rawDesc = "" +
 	"\vpublic_root\x18\x05 \x01(\tR\n" +
 	"publicRoot\"\xd4\x01\n" +
 	"\fRangeRequest\x12!\n" +
-	"\factual_value\x18\x01 \x01(\tR\vactualValue\x12\x1f\n" +
+	"\factual_value\x18\x01 \x01(\rR\vactualValue\x12\x1f\n" +
 	"\vactual_salt\x18\x02 \x01(\tR\n" +
 	"actualSalt\x12\x1d\n" +
 	"\n" +

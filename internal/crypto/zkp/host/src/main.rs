@@ -3,7 +3,7 @@ use std::path::Path;
 use tonic::{transport::Server, Request, Response, Status};
 use sha2::{Sha256, Digest as ShaDigest};
 
-use methods::{MEMBERSHIP_ELF, MEMBERSHIP_ID};
+use methods::{MEMBERSHIP_ELF, MEMBERSHIP_ID, RANGE_ELF, RANGE_ID};
 use risc0_zkvm::{get_prover_server, ExecutorEnv, ProverOpts, Receipt, sha::Digest};
 
 pub mod prover {
@@ -40,6 +40,7 @@ impl ProverService for ProverHost {
         let req = request.into_inner();
         
         match req.proof_data {
+            // --- EXISTING MEMBERSHIP (UNTOUCHED) ---
             Some(ProofData::Membership(m)) => {
                 let root = Self::hex_to_digest(&m.public_root)?;
 
@@ -64,6 +65,34 @@ impl ProverService for ProverHost {
                     receipt_bytes: bincode::serialize(&prove_info.receipt).unwrap(),
                 }))
             },
+
+            // --- ADDED RANGE REQUEST ---
+            Some(ProofData::Range(r)) => {
+                let root = Self::hex_to_digest(&r.public_root)?;
+
+                let env = ExecutorEnv::builder()
+                    .write(&r.actual_value).unwrap() // uint32
+                    .write(&r.actual_salt).unwrap()  // string
+                    .write(&r.all_leaves).unwrap()   // repeated string
+                    .write(&r.lower_bound).unwrap()  // uint32
+                    .write(&r.upper_bound).unwrap()  // uint32
+                    .write(&root).unwrap()           // Digest
+                    .build()
+                    .map_err(|e| Status::internal(e.to_string()))?;
+
+                let prover = get_prover_server(&ProverOpts::fast()).unwrap();
+                let prove_info = prover.prove(env, RANGE_ELF)
+                    .map_err(|e| Status::internal(format!("Prover failed: {}", e)))?;
+                
+                let receipt_id = Self::save_receipt(&prove_info.receipt);
+                
+                Ok(Response::new(ProofResponse {
+                    receipt_id,
+                    cycles: prove_info.stats.total_cycles as u32,
+                    receipt_bytes: bincode::serialize(&prove_info.receipt).unwrap(),
+                }))
+            },
+
             _ => Err(Status::unimplemented("Not implemented")),
         }
     }

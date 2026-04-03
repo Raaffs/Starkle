@@ -25,7 +25,7 @@ message MembershipRequest {
 }
 
 message RangeRequest {
-  string actual_value = 1;
+  uint32 actual_value = 1;
   string actual_salt = 2;       // Hex string
   repeated string all_leaves = 3; // Hex strings
   uint32 lower_bound = 4;

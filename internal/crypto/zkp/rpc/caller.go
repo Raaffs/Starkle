@@ -76,7 +76,7 @@ func (c *ZKProverClient) RequestRangeProof(
 	req := &pb.ProofRequest{
 		ProofData: &pb.ProofRequest_Range{
 			Range: &pb.RangeRequest{
-				ActualValue: actualValue,
+				ActualValue: 2,
 				ActualSalt:  actualSalt,
 				AllLeaves:   allLeaves,
 				LowerBound: lowerBound,

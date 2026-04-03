@@ -2,9 +2,9 @@ package rpc
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
+	"testing"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -12,7 +12,7 @@ import (
 	pb "github.com/Suy56/ProofChain/internal/crypto/zkp/rpc/proto"
 )
 
-func main() {
+func TestProof(t *testing.T) {
 	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Failed to connect: %v", err)
@@ -31,24 +31,24 @@ func main() {
 		"9abb011986c668d6ef31a58fca1ac09380ef0cd6cb8eb7f25c481165fa76d182",
 	}
 
-	actualValue := "Maria"
-	saltStr := "e47a395cd43ec2ab68f0f902336053bc"
+	actualValue := 28
+	saltStr := "8ee3d96cd121b2fc3235ce0e23ad800d"
 	rootStr := "747dec436d75a6912e913324672a78dd7a14c40c6ef3acc2825c6adebb0116bc"
 
-	// 2. Construct Request using pure strings
 	req := &pb.ProofRequest{
-		ProofData: &pb.ProofRequest_Membership{
-			Membership: &pb.MembershipRequest{
-				ActualValue: actualValue,
+		ProofData: &pb.ProofRequest_Range{
+			Range: &pb.RangeRequest{
+				ActualValue: uint32(actualValue),
 				ActualSalt:  saltStr,
 				AllLeaves:   allLeavesStrings,
-				PublicList:  []string{"Mark", "Maria", "John", "Sam"},
+				LowerBound:  uint32(18),
+				UpperBound:  uint32(60),
 				PublicRoot:  rootStr,
 			},
 		},
 	}
 
-	fmt.Printf("🚀 Requesting Membership Proof (String Mode) for: %s\n", actualValue)
+	t.Logf("🚀 Requesting Membership Proof (String Mode) for: %d\n", actualValue)
 	
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
@@ -59,10 +59,10 @@ func main() {
 		log.Fatalf("❌ Prover Error: %v", err)
 	}
 
-	fmt.Println("--------------------------------------------------")
-	fmt.Printf("✅ Success! Proof Generated.\n")
-	fmt.Printf("Receipt ID:  %s\n", resp.ReceiptId)
-	fmt.Printf("Cycles Used: %d\n", resp.Cycles)
-	fmt.Printf("Duration:    %v\n", time.Since(start))
-	fmt.Println("--------------------------------------------------")
+	t.Log("--------------------------------------------------")
+	t.Logf("✅ Success! Proof Generated.\n")
+	t.Logf("Receipt ID:  %s\n", resp.ReceiptId)
+	t.Logf("Cycles Used: %d\n", resp.Cycles)
+	t.Logf("Duration:    %v\n", time.Since(start))
+	t.Log("--------------------------------------------------")
 }
