@@ -12,16 +12,7 @@ import (
 	pb "github.com/Suy56/ProofChain/internal/crypto/zkp/rpc/proto"
 )
 
-func TestProof(t *testing.T) {
-	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("Failed to connect: %v", err)
-	}
-	defer conn.Close()
-	client := pb.NewProverServiceClient(conn)
-
-	// 1. Keep hashes as hex strings
-	allLeavesStrings := []string{
+var allLeavesStrings = []string{
 		"12e1970ebf67cc91c0a76aabe0107bd1e0427b89c5ec6e21d888dbd408652cb8",
 		"55cece5b7c3eb9b4972758d38dd8763efa67d991c5311cd96ef05889a441c74e",
 		"d05387dd84b0432a9fb3f24bf26e8e25da656d9e2241f2a089db5fb732a23fcc",
@@ -31,6 +22,13 @@ func TestProof(t *testing.T) {
 		"9abb011986c668d6ef31a58fca1ac09380ef0cd6cb8eb7f25c481165fa76d182",
 	}
 
+func TestRangeProof(t *testing.T) {
+	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("Failed to connect: %v", err)
+	}
+	defer conn.Close()
+	client := pb.NewProverServiceClient(conn)	
 	actualValue := 28
 	saltStr := "8ee3d96cd121b2fc3235ce0e23ad800d"
 	rootStr := "747dec436d75a6912e913324672a78dd7a14c40c6ef3acc2825c6adebb0116bc"
@@ -43,6 +41,49 @@ func TestProof(t *testing.T) {
 				AllLeaves:   allLeavesStrings,
 				LowerBound:  uint32(18),
 				UpperBound:  uint32(60),
+				PublicRoot:  rootStr,
+			},
+		},
+	}
+
+	t.Logf("🚀 Requesting Membership Proof (String Mode) for: %d\n", actualValue)
+	
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
+
+	start := time.Now()
+	resp, err := client.GenerateProof(ctx, req)
+	if err != nil {
+		log.Fatalf("❌ Prover Error: %v", err)
+	}
+
+	t.Log("--------------------------------------------------")
+	t.Logf("✅ Success! Proof Generated.\n")
+	t.Logf("Receipt ID:  %s\n", resp.ReceiptId)
+	t.Logf("Cycles Used: %d\n", resp.Cycles)
+	t.Logf("Duration:    %v\n", time.Since(start))
+	t.Log("--------------------------------------------------")
+}
+
+func TestSetMembershipProof(t *testing.T) {
+	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("Failed to connect: %v", err)
+	}
+	defer conn.Close()
+	client := pb.NewProverServiceClient(conn)	
+	actualValue := "Maria"
+	saltStr := "8ee3d96cd121b2fc3235ce0e23ad800d"
+	publicList := []string{"Maria", "Mark", "John", "Maquia"}
+	rootStr := "747dec436d75a6912e913324672a78dd7a14c40c6ef3acc2825c6adebb0116bc"
+
+	req := &pb.ProofRequest{
+		ProofData: &pb.ProofRequest_Membership{
+			Membership: &pb.MembershipRequest{
+				ActualValue: actualValue,
+				ActualSalt:  saltStr,
+				AllLeaves:   allLeavesStrings,
+				PublicList: publicList,
 				PublicRoot:  rootStr,
 			},
 		},
