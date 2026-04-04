@@ -16,6 +16,7 @@ func TestVerifyProof_Scenarios(t *testing.T) {
 		BirthDate:       "1990-01-01",
 		Address:         1,
 		Age: 		   	 23,
+		PublicAddress: 	"fefefefe",
 		Extra:           map[string]any{"MembershipID": "1225789"},
 	}
 

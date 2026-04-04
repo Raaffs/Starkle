@@ -2,7 +2,6 @@ package rpc
 
 import (
 	"context"
-	"log"
 	"time"
 	"testing"
 
@@ -22,88 +21,121 @@ var allLeavesStrings = []string{
 		"9abb011986c668d6ef31a58fca1ac09380ef0cd6cb8eb7f25c481165fa76d182",
 	}
 
-func TestRangeProof(t *testing.T) {
+
+// Helper to get gRPC client
+func getClient(t *testing.T) (pb.ProverServiceClient, func()) {
 	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("Failed to connect: %v", err)
+		t.Fatalf("Failed to connect: %v", err)
 	}
-	defer conn.Close()
-	client := pb.NewProverServiceClient(conn)	
-	actualValue := 28
-	saltStr := "8ee3d96cd121b2fc3235ce0e23ad800d"
-	rootStr := "747dec436d75a6912e913324672a78dd7a14c40c6ef3acc2825c6adebb0116bc"
+	client := pb.NewProverServiceClient(conn)
+	return client, func() { conn.Close() }
+}
 
-	req := &pb.ProofRequest{
-		ProofData: &pb.ProofRequest_Range{
-			Range: &pb.RangeRequest{
-				ActualValue: uint32(actualValue),
-				ActualSalt:  saltStr,
-				AllLeaves:   allLeavesStrings,
-				LowerBound:  uint32(18),
-				UpperBound:  uint32(60),
-				PublicRoot:  rootStr,
-			},
-		},
-	}
+func TestRangeProof(t *testing.T) {
+	client, closeConn := getClient(t)
+	defer closeConn()
 
-	t.Logf("🚀 Requesting Membership Proof (String Mode) for: %d\n", actualValue)
-	
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
-	defer cancel()
+	validRoot := "747dec436d75a6912e913324672a78dd7a14c40c6ef3acc2825c6adebb0116bc"
+	validSalt := "8ee3d96cd121b2fc3235ce0e23ad800d"
 
-	start := time.Now()
-	resp, err := client.GenerateProof(ctx, req)
-	if err != nil {
-		log.Fatalf("❌ Prover Error: %v", err)
+	tests := []struct {
+		name        string
+		actualValue uint32
+		salt        string
+		root        string
+		lower       uint32
+		upper       uint32
+		wantErr     bool
+	}{
+		{"ValidProof", 28, validSalt, validRoot, 18, 60, false},
+		{"ValueTooLow", 10, validSalt, validRoot, 18, 60, true},
+		{"ValueTooHigh", 70, validSalt, validRoot, 18, 60, true},
+		{"WrongSalt", 28, "wrong_salt_12345", validRoot, 18, 60, true},
+		{"WrongRootHash", 28, validSalt, "deadbeef12345678", 18, 60, true},
+		{"BoundaryLower", 18, validSalt, validRoot, 18, 60, true},
 	}
 
-	t.Log("--------------------------------------------------")
-	t.Logf("✅ Success! Proof Generated.\n")
-	t.Logf("Receipt ID:  %s\n", resp.ReceiptId)
-	t.Logf("Cycles Used: %d\n", resp.Cycles)
-	t.Logf("Duration:    %v\n", time.Since(start))
-	t.Log("--------------------------------------------------")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := &pb.ProofRequest{
+				ProofData: &pb.ProofRequest_Range{
+					Range: &pb.RangeRequest{
+						ActualValue: tt.actualValue,
+						ActualSalt:  tt.salt,
+						AllLeaves:   allLeavesStrings,
+						LowerBound:  tt.lower,
+						UpperBound:  tt.upper,
+						PublicRoot:  tt.root,
+					},
+				},
+			}
+
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+			defer cancel()
+
+			resp, err := client.GenerateProof(ctx, req)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GenerateProof() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if err == nil {
+				t.Logf("✅ Receipt ID: %s | Cycles: %d", resp.ReceiptId, resp.Cycles)
+			}
+		})
+	}
 }
 
 func TestSetMembershipProof(t *testing.T) {
-	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("Failed to connect: %v", err)
-	}
-	defer conn.Close()
-	client := pb.NewProverServiceClient(conn)	
-	actualValue := "Maria"
-	saltStr := "8ee3d96cd121b2fc3235ce0e23ad800d"
+	client, closeConn := getClient(t)
+	defer closeConn()
+
+	validRoot := "747dec436d75a6912e913324672a78dd7a14c40c6ef3acc2825c6adebb0116bc"
+	validSalt := "e47a395cd43ec2ab68f0f902336053bc"
 	publicList := []string{"Maria", "Mark", "John", "Maquia"}
-	rootStr := "747dec436d75a6912e913324672a78dd7a14c40c6ef3acc2825c6adebb0116bc"
 
-	req := &pb.ProofRequest{
-		ProofData: &pb.ProofRequest_Membership{
-			Membership: &pb.MembershipRequest{
-				ActualValue: actualValue,
-				ActualSalt:  saltStr,
-				AllLeaves:   allLeavesStrings,
-				PublicList: publicList,
-				PublicRoot:  rootStr,
-			},
-		},
+	tests := []struct {
+		name        string
+		actualValue string
+		salt        string
+		root        string
+		list        []string
+		wantErr     bool
+	}{
+		{"ValidMember", "Maria", validSalt, validRoot, publicList, false},
+		{"ValueNotInList", "Steve", validSalt, validRoot, publicList, true},
+		{"IncorrectSalt", "Maria", "bad_salt_999", validRoot, publicList, true},
+		{"TamperedRoot", "Maria", validSalt, "fake_root_hash", publicList, true},
+		{"EmptyPublicList", "Maria", validSalt, validRoot, []string{}, true},
 	}
 
-	t.Logf("🚀 Requesting Membership Proof (String Mode) for: %d\n", actualValue)
-	
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
-	defer cancel()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := &pb.ProofRequest{
+				ProofData: &pb.ProofRequest_Membership{
+					Membership: &pb.MembershipRequest{
+						ActualValue: tt.actualValue,
+						ActualSalt:  tt.salt,
+						AllLeaves:   allLeavesStrings,
+						PublicList:  tt.list,
+						PublicRoot:  tt.root,
+					},
+				},
+			}
 
-	start := time.Now()
-	resp, err := client.GenerateProof(ctx, req)
-	if err != nil {
-		log.Fatalf("❌ Prover Error: %v", err)
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+			defer cancel()
+
+			resp, err := client.GenerateProof(ctx, req)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GenerateProof() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if err == nil {
+				t.Logf("✅ Receipt ID: %s | Cycles: %d", resp.ReceiptId, resp.Cycles)
+			}
+		})
 	}
-
-	t.Log("--------------------------------------------------")
-	t.Logf("✅ Success! Proof Generated.\n")
-	t.Logf("Receipt ID:  %s\n", resp.ReceiptId)
-	t.Logf("Cycles Used: %d\n", resp.Cycles)
-	t.Logf("Duration:    %v\n", time.Since(start))
-	t.Log("--------------------------------------------------")
 }

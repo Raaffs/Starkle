@@ -1,0 +1,46 @@
+{
+  "salted_fields": {
+    "Address": {
+      "hash": "e4c91aebd4a39fce668a35e774670163276c7c96ea70517d63a35ae2f6ab06eb",
+      "key": "Address",
+      "value": "1",
+      "salt": "75ec0266f31dce635ea9031ba494f08a"
+    },
+    "Age": {
+      "hash": "a843fa9164a46b68fc09afd6d80bbb07895d2e5932f66506826f6b3b62ab455c",
+      "key": "Age",
+      "value": "23",
+      "salt": "15cc3d480a46c327956555dd17f35a11"
+    },
+    "BirthDate": {
+      "hash": "31c87f85060e7fbb4867667959b6cd936e546627f5ec316ac07dd842dd51e5b6",
+      "key": "BirthDate",
+      "value": "1990-01-01",
+      "salt": "917ac7a419681aadf354562fef5cbaf3"
+    },
+    "CertificateName": {
+      "hash": "368fee6dcb4ad7a92f2c03bfb0d259a76f3ed59cfe81d215b78f5e6ecf44e508",
+      "key": "CertificateName",
+      "value": "Master of Electrical Engineering",
+      "salt": "f805f3359c0cbe0231507020112b8adc"
+    },
+    "Name": {
+      "hash": "b434822a174316a2ced80609fc579b3e116c2d9a3e6d298c65fc5f970ac20726",
+      "key": "Name",
+      "value": "alice",
+      "salt": "829f52c44515aaa8233c27ff6257f62b"
+    },
+    "PublicAddress": {
+      "hash": "ac6060428e67dd66cc84c6ef146f5bb3ffaa6a43a129802c4d41ad929e06a6b6",
+      "key": "PublicAddress",
+      "value": "0x123...",
+      "salt": "cd0045469a886b45984f7584a3c6e7a0"
+    },
+    "UniqueID": {
+      "hash": "bdef225d1845ffb94303ab9b23dbb796dc7629a891df45601c98c74d5ac768bb",
+      "key": "UniqueID",
+      "value": "ID-999",
+      "salt": "86986c30de88c2ab36ce2b24251949b4"
+    }
+  }
+}

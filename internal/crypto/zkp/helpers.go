@@ -44,6 +44,8 @@ func SaltCertificate(c models.CertificateBase[any]) (SaltedCertificate, error) {
 	        buf := make([]byte, 4)
         	binary.LittleEndian.PutUint32(buf, uint32(v))
 			leafHash = HashData(buf, []byte(salt))
+		case nil:
+			leafHash=HashData([]byte(""),[]byte(salt))
 		default:
 			return SaltedCertificate{}, fmt.Errorf("unsupported field type for key %s", key)
 		}
