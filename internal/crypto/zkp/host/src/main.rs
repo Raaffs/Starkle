@@ -66,7 +66,6 @@ impl ProverService for ProverHost {
                 }))
             },
 
-            // --- ADDED RANGE REQUEST ---
             Some(ProofData::Range(r)) => {
                 let root = Self::hex_to_digest(&r.public_root)?;
 

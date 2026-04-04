@@ -96,8 +96,8 @@ contract Verification{
 
     function addCertificate(string memory _hash, string memory _institute, address _requestor)public{
         require( 
-            msg.sender==institutions[_institute].publicAddr,
-            "register first to upload"
+            msg.sender==institutions[_institute].publicAddr && institutions[_institute].approved==true,
+            "You're not approved to issue certificate for this institution"
         );
 
         documentList[_hash]=docIndexCounter;
