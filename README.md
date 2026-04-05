@@ -163,7 +163,7 @@ wails build
 
 ---
  ### 3. Issuing digital certificate 
- <img width="1434" height="1074" alt="3" src="https://github.com/user-attachments/assets/98bde04d-f3d3-4a79-b9cd-aad0f8d5f797" />
+<img width="1373" height="1083" alt="4" src="https://github.com/user-attachments/assets/f9393a43-07fd-43cf-8712-c5df9643801a" />
 
 ---
  ### 4. Third Party Verification
