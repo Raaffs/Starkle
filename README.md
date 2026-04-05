@@ -87,7 +87,7 @@ Proofchain is a document verficationa and certficate issuance platform, allowing
   ---
 ### Set Up
 
-1. Set up Envihttps://img.shields.io/badge/RISC0-FFC700?style=for-the-badgeroment variables in `.env` file
+1. Set up in `.env` file
     ```
     cd ProofChain
     PRIVATE_KEY=YOUR_PRIVATE_KEY
@@ -155,15 +155,19 @@ wails build
 <!-- UML -->
 ## UML
  ### 1. Uploading Documents
-<img width="1759" height="1335" alt="Sequence diagram(1)" src="https://github.com/user-attachments/assets/5cddf928-6f11-494f-bc87-1eecbf4f1ef9" />
+<img width="1662" height="1459" alt="1" src="https://github.com/user-attachments/assets/2506121d-06b6-4b76-95db-a99c09eb29d2" />
 
 ---
- ### 2. Issue certificate or create digital copy
- <img width="1404" height="1310" alt="issue" src="https://github.com/user-attachments/assets/cc3359db-2b01-48b0-a3fb-94910cbb9ffc" />
+ ### 2. Creating digital copy
+<img width="1647" height="1312" alt="2" src="https://github.com/user-attachments/assets/44e06519-68e7-49c6-bf42-436fbf2e333d" />
 
 ---
- ### 3. Third Party Verification
- <img width="1474" height="1047" alt="verify" src="https://github.com/user-attachments/assets/d3a5d068-31ff-4a17-a50b-aa2cca800dfa" />
+ ### 3. Issuing digital certificate 
+ <img width="1434" height="1074" alt="3" src="https://github.com/user-attachments/assets/98bde04d-f3d3-4a79-b9cd-aad0f8d5f797" />
+
+---
+ ### 4. Third Party Verification
+<img width="1434" height="1074" alt="3" src="https://github.com/user-attachments/assets/98bde04d-f3d3-4a79-b9cd-aad0f8d5f797" />
 
 ---
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
