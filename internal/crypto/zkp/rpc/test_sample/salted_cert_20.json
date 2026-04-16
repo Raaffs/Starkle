@@ -1,0 +1,124 @@
+{
+  "salted_fields": {
+    "Address": {
+      "hash": "3705edd294471e8f731ccfe7fbfa4a02b4c29671eb6b5bdd5e63ae34bb4c7a24",
+      "key": "Address",
+      "value": "1",
+      "salt": "78cf0b7fec66bcd3fcfd0a365fc7228f"
+    },
+    "Age": {
+      "hash": "c364dcba97d04846b7ce23135a395f80227435fded9786354e032d44cd6177bc",
+      "key": "Age",
+      "value": "23",
+      "salt": "d446c5fa845ad43900984f316fbe9881"
+    },
+    "BirthDate": {
+      "hash": "8015d76e6b206b24fed33a709f4cdf13e54500f4cb8c9f415c611178ec1149fe",
+      "key": "BirthDate",
+      "value": "1990-01-01",
+      "salt": "315de866cf4cb5303599e248e55951ef"
+    },
+    "CertificateName": {
+      "hash": "8b924735cf73387b932cfd5686174222f029f4d7ec5f5464e36badb7b623cc43",
+      "key": "CertificateName",
+      "value": "Master of Electrical Engineering",
+      "salt": "802102a8cae1e2ce648938d04996611f"
+    },
+    "Name": {
+      "hash": "1dcb707a526e8fc0ffbe65a53f7578af9e216762ae974bd66de6a2687d286384",
+      "key": "Name",
+      "value": "alice",
+      "salt": "8faca41890c471baa1f718ecb0b02fae"
+    },
+    "PublicAddress": {
+      "hash": "bd3fe15c47a252812cc0e364658ce3c926394dab4695c1e69fe6d150cd79d49d",
+      "key": "PublicAddress",
+      "value": "0x123...",
+      "salt": "db0ef6264a6a5e7fce2d8ac7d4835619"
+    },
+    "UniqueID": {
+      "hash": "1a0be1cd6c55571db001511fad64d0cf3b184b7870a7acc42279c1f66ac36b69",
+      "key": "UniqueID",
+      "value": "ID-999",
+      "salt": "6f35f244a48c5000ae2c83ade1bb8b79"
+    },
+    "ext_0": {
+      "hash": "54edb233fbaa75e5d4e1850824993ebab27a30042b97b28502faaaea7208205f",
+      "key": "ext_0",
+      "value": "val_0",
+      "salt": "d9898490e939221adcae0c65cf5e890e"
+    },
+    "ext_1": {
+      "hash": "1a43d47f19108118557efd58ac6439729d2a6f690e2af4f3bb67ac7b4f18db5a",
+      "key": "ext_1",
+      "value": "val_1",
+      "salt": "077308d467978f0847da4d836035c0b5"
+    },
+    "ext_10": {
+      "hash": "a68685ed1a89eb161f939ad397c0e696aa3e2597b1f09b62d591ab550b4533b0",
+      "key": "ext_10",
+      "value": "val_10",
+      "salt": "3a4d6fedde231a7650f8db7c0fa4155f"
+    },
+    "ext_11": {
+      "hash": "6711e2993cec847ffaf4d95042c92808aaad9e00ef83c7204ab2e775cade9acd",
+      "key": "ext_11",
+      "value": "val_11",
+      "salt": "6617cabb104a9e3b26245273107cbcae"
+    },
+    "ext_12": {
+      "hash": "95a899756c0ee6dbc8d8e4c2a52cd20c5769014627c885257f76c392bfbad9cf",
+      "key": "ext_12",
+      "value": "val_12",
+      "salt": "c68a9d11df2705fd14a42f98daee1ff7"
+    },
+    "ext_2": {
+      "hash": "e35a2f9779591b58b3554dba36ba7d828f62993f9c6784de6c31565fafc806ca",
+      "key": "ext_2",
+      "value": "val_2",
+      "salt": "0265285bfab525e3053274c1802fbb09"
+    },
+    "ext_3": {
+      "hash": "0f4f26aa12ad247c423537bf64802411ecd4bdbcdd779bd36d4e6b103eaf26ad",
+      "key": "ext_3",
+      "value": "val_3",
+      "salt": "2297a11f63798226aa398b3d0af22185"
+    },
+    "ext_4": {
+      "hash": "77ae048748383c0571156b92c2323d93fecef05f82c54a2594942bd5c9eaf028",
+      "key": "ext_4",
+      "value": "val_4",
+      "salt": "f9c8e7c6746e4eb75bb94c69a1b88851"
+    },
+    "ext_5": {
+      "hash": "edb74d5bb1a2f58abfcb00acf9da23a94d3e9ffdb050c32c38878f48925a9c21",
+      "key": "ext_5",
+      "value": "val_5",
+      "salt": "11318e34e98bb6d949087517cec78170"
+    },
+    "ext_6": {
+      "hash": "cf2bf531a22ca55507abd8eac8ef0e7b0222843ba576191b07b148f7feb512b7",
+      "key": "ext_6",
+      "value": "val_6",
+      "salt": "82c86e3fee6cca9ea73c43eaa2981a8b"
+    },
+    "ext_7": {
+      "hash": "6c08b9fe57722d406fb1f54b48c5aa1dab1049b358825d53dc8073c7c99aba8f",
+      "key": "ext_7",
+      "value": "val_7",
+      "salt": "d11d19baba702d1c503b52e96ebe9a82"
+    },
+    "ext_8": {
+      "hash": "fcaef8301c38a21b9e7f67fa6c165ff836bb5a005713e8a3843de769a11f38ca",
+      "key": "ext_8",
+      "value": "val_8",
+      "salt": "6a671168ce4a28a020e74e0b2ce79129"
+    },
+    "ext_9": {
+      "hash": "35916570ec5d858bd147737fb557d189e3850b86ead17334087ec1fb3337bfa7",
+      "key": "ext_9",
+      "value": "val_9",
+      "salt": "e5bcdcea18d102c5cb3bd039b34bfe35"
+    }
+  }
+}

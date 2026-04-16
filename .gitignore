@@ -16,6 +16,9 @@ wails
 build/*
 concept
 startup
+receipts/*
+test_results/*
+
 # Test binary, built with `go test -c`
 *.test
 .config_test.json

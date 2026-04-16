@@ -25,7 +25,7 @@ func TestVerifyProof_Scenarios(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to generate root: %v", err)
 	}
-	log.Println("salted cert: ",saltedCert)
+	log.Println("root: ",root)
 	extractHashes := func(s SaltedCertificate) []Hash {
 		var h []Hash
 		var keys []string
@@ -111,4 +111,51 @@ func TestVerifyProof_Scenarios(t *testing.T) {
 			t.Errorf("Expected failure: Proof is valid but root hash doesn't match expectedRoot")
 		}
 	})
+}
+
+func TestMerkleProofConsistency(t *testing.T) {
+    // 1. Setup Mock Certificate Data
+    cert := models.CertificateBase[any]{
+        Name:           "Alice Smith",
+        Age:            30,
+        Address:        "123 Blockchain Ave",
+        CertificateName: "Identity Proof",
+        PublicAddress:  "0x123...abc",
+        UniqueID:       "UID-999",
+        BirthDate:      "1994-01-01",
+    }
+
+    // 2. Step 1: Generate the Merkle Root using GenerateRootProof
+    mp := &MerkleProof{}
+    rootHash, saltedCert, err := mp.GenerateRootProof(cert)
+    if err != nil {
+        t.Fatalf("Failed to generate root proof: %v", err)
+    }
+
+    // Prepare leaf hashes as strings for the path generator
+    var leaves []string
+    for _, leafHash := range mp.LeafHashes {
+        leaves = append(leaves, string(leafHash))
+    }
+
+    // 3. Step 2: Pick a target field to prove (e.g., "Name")
+    targetKey := "Name"
+    targetLeaf, ok := saltedCert.SaltedFields[targetKey]
+    if !ok {
+        t.Fatalf("Target key %s not found in salted certificate", targetKey)
+    }
+
+    // Generate the Merkle Path for the "Name" field
+    generatedRoot, path := GenerateMerklePath(
+        leaves, 
+        string(targetLeaf.Hash), 
+    )
+
+    // 4. Step 3: Check if GenerateMerklePath leads to the correct root
+    if generatedRoot != string(rootHash) {
+        t.Errorf("Root mismatch!\nExpected: %x\nActual:   %x", rootHash, generatedRoot)
+    } else {
+        t.Logf("Success! Merkle path for '%s' verified against root.", targetKey)
+        t.Logf("Path length: %d siblings", len(path))
+    }
 }

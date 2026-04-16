@@ -65,7 +65,7 @@ func (c *ZKProverClient) RequestMembershipProof(
 
 func (c *ZKProverClient) RequestRangeProof(
 	ctx context.Context,
-	actualValue string,
+	actualValue int,
 	actualSalt string,
 	allLeaves []string,
 	lowerBound uint32,
@@ -76,7 +76,7 @@ func (c *ZKProverClient) RequestRangeProof(
 	req := &pb.ProofRequest{
 		ProofData: &pb.ProofRequest_Range{
 			Range: &pb.RangeRequest{
-				ActualValue: 2,
+				ActualValue: uint32(actualValue),
 				ActualSalt:  actualSalt,
 				AllLeaves:   allLeaves,
 				LowerBound: lowerBound,

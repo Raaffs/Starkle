@@ -48,6 +48,8 @@ func BenchmarkMerkleScalability(b *testing.B) {
 		{"N_70", 70},
 		{"N_100", 100},
 		{"N_128", 128},
+		{"N_1024", 1024},
+		{"N_16384", 16384},
 	}
 
 	// Prepare result directory

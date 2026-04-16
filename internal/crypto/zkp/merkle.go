@@ -2,6 +2,7 @@ package zkp
 
 import (
 	"encoding/binary"
+	"fmt"
 	"slices"
 	"sort"
 
@@ -54,8 +55,48 @@ func (id *MerkleProof) GenerateRootProof(c models.CertificateBase[any]) (Hash, S
 	return id.RootHash, saltedCert, nil
 }
 
+func GenerateMerklePath(leaves []string, targetHash string) (string, []string) {
+    // DO NOT sort(current) here. 
+    // The leaves must remain in the same order as they were 
+    // when calculateMerkleRoot was called.
+    current := make([]string, len(leaves))
+    copy(current, leaves)
 
+    var path []string
+    
+    for len(current) > 1 {
+        // Handle odd number of nodes
+        if len(current)%2 != 0 {
+            current = append(current, current[len(current)-1])
+        }
 
+        var nextLevel []string
+        for i := 0; i < len(current); i += 2 {
+            h1, h2 := current[i], current[i+1]
+            
+            // Deterministic sorting of PAIRS is fine and matches calculateMerkleRoot
+            first, second := h1, h2
+            if h1 > h2 {
+                first, second = h2, h1
+            }
+
+            parent := string(HashData([]byte(first), []byte(second)))
+            nextLevel = append(nextLevel, parent)
+
+            // Correct target tracking
+            if h1 == targetHash {
+                path = append(path, h2)
+                targetHash = parent
+            } else if h2 == targetHash {
+                path = append(path, h1)
+                targetHash = parent
+            }
+        }
+        current = nextLevel
+    }
+
+    return current[0], path
+}
 // VerifyProof checks if a disclosed proof matches the expected root hash.
 // This runs on the client/verifier side.
 func VerifyProof(p ProofVerification, expectedRoot Hash) bool {
@@ -117,3 +158,24 @@ func calculateMerkleRoot(leaves []Hash) Hash {
 	return calculateMerkleRoot(nextLevel)
 }
 
+func calculateLeafHash(value any, salt string) (Hash,error) {
+    var leafHash Hash
+    switch v := value.(type) {
+    case string:
+        leafHash = HashData([]byte(v), []byte(salt))
+    case int:
+        buf := make([]byte, 4)
+        binary.LittleEndian.PutUint32(buf, uint32(v))
+        leafHash = HashData(buf, []byte(salt))
+    case uint32:
+        buf := make([]byte, 4)
+        binary.LittleEndian.PutUint32(buf, v)
+        leafHash = HashData(buf, []byte(salt))
+    case nil:
+        leafHash = HashData([]byte(""), []byte(salt))
+    default:
+        // Default to string conversion if type is unknown
+        return "",fmt.Errorf("invalid data type used for hashing leaf")
+    }
+    return leafHash,nil
+}

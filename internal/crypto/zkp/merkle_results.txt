@@ -1,13 +1,13 @@
-2026/04/04 20:56:30 salted cert:  {map[Address:{e037a0af997622e00c90def7e8e386cfadfb4b315c16bb57c2ee6ddbc4aafbe3 Address 1 dd157a270f8f98b9771ef88c8c329097} Age:{8597966debba5c5b19a4e4fe293678e30d451a066f6414f0e362b1252c6109d3 Age 23 a7dac9eeafb3e4926a51a2c97b16a8ee} BirthDate:{5b78033d9d4e0198a3356e1d28eddb07c0d477f847f67fb13b80e740f975ff59 BirthDate 1990-01-01 ac6bf9e63cef77ec8587e491e1fe6c0d} CertificateName:{6f26bd878e0a3baa7910415fd04856fbeb52b0ffa4ef2ee3dfa058d13591aff5 CertificateName Master of Electrical and ElectronicsEngineering 16976d271992ea61d4c6990ad84f53cd} MembershipID:{73f85b62c66871774004fde43e1e4cad8b44953ee5e1e0a6ebd41f64c68b17c0 MembershipID 1225789 269633ae142cc789f1ef358df8da2a2c} Name:{f78a04b5e6ebb8b4286bc9e9b59f2eb7a6928253ca68baa59e2be80a27c01257 Name alice 4d335931edba490379fd8f92bbc99936} PublicAddress:{c259b9102fecf660e16b4dbfeb2f7cbf379a1f47035929c8e83f91d44c7078f7 PublicAddress fefefefe e9554c18525380e901f4dcbebed16bf9} UniqueID:{b17492dca816442f9670998b03dd4aa095e14ef6ae0f6c1f17f29ab2c4abcbd6 UniqueID <nil> 6f3ffaccfcd84ca3193f7b3273b5e236}]}
+2026/04/07 19:19:50 salted cert:  {map[Address:{e363a2314f2dc6d011119d3f111c81728cc86bf043886d727ef180096df34760 Address 1 b065a6b0883c8d691ba040b149a92b77} Age:{0beda1f6d510ef0b5001c5ffd33a0a164d98f7b575a60d030a7cf3e73a872e3b Age 23 1438148779b30aa657a5248ab50590b6} BirthDate:{58d65cd410b1f46ef1ed9d4b6da66f654e2c502504a18b3ce431571ea65199d6 BirthDate 1990-01-01 39d4d2496732832f837d4343645afdd2} CertificateName:{c6a39d465eb7fda4b42b40c64909de9b9cd5d3d6685d7ecb1ddc2eecd89d20ad CertificateName Master of Electrical and ElectronicsEngineering fab90e23a61f23823ca642fa83e03dac} MembershipID:{88064f72637da08b81b919e95207e44324ce41b8be5c4981c8d1bd1c8d8f3f53 MembershipID 1225789 7a4f25986286b399291f75e93e60e963} Name:{9c19dae40d50c5febb9a991d2d69ad27669c5db9621e99372b07b445123a1fb7 Name alice 4c2dbbf88f6a37d7201675852ff03866} PublicAddress:{d4d53e4bc68566843eaff5a0df0ce4ce11e8886fe6d9f2d7ce81a5acbad5a7be PublicAddress fefefefe 0ed978d70a67231ac855d0a8ffa997d2} UniqueID:{9d3e58423123a3e35d8a6e0109be4c3dcd7dc327bee2d1746837455dd7f7bfdb UniqueID <nil> 4ed59699f48ef57dcf83eaf638438975}]}
 goos: linux
 goarch: amd64
 pkg: github.com/Suy56/ProofChain/internal/crypto/zkp
 cpu: 13th Gen Intel(R) Core(TM) i5-13420H
-BenchmarkMerkleScalability/N_5-12         	   27754	     43400 ns/op	    5864 B/op	      92 allocs/op
-BenchmarkMerkleScalability/N_20-12        	    8452	    145587 ns/op	   22292 B/op	     291 allocs/op
-BenchmarkMerkleScalability/N_40-12        	    4006	    293147 ns/op	   45723 B/op	     563 allocs/op
-BenchmarkMerkleScalability/N_70-12        	    2314	    526098 ns/op	   83851 B/op	     976 allocs/op
-BenchmarkMerkleScalability/N_100-12       	    1578	    739920 ns/op	  106721 B/op	    1362 allocs/op
-BenchmarkMerkleScalability/N_128-12       	    1285	    918172 ns/op	  152873 B/op	    1712 allocs/op
+BenchmarkMerkleScalability/N_5-12         	  101961	     12641 ns/op	    5864 B/op	      92 allocs/op
+BenchmarkMerkleScalability/N_20-12        	   23919	     49691 ns/op	   22290 B/op	     291 allocs/op
+BenchmarkMerkleScalability/N_40-12        	   12787	     97782 ns/op	   45723 B/op	     563 allocs/op
+BenchmarkMerkleScalability/N_70-12        	    5949	    171642 ns/op	   83868 B/op	     976 allocs/op
+BenchmarkMerkleScalability/N_100-12       	    4677	    237639 ns/op	  106713 B/op	    1362 allocs/op
+BenchmarkMerkleScalability/N_128-12       	    3693	    326768 ns/op	  152873 B/op	    1712 allocs/op
 PASS
-ok  	github.com/Suy56/ProofChain/internal/crypto/zkp	10.735s
+ok  	github.com/Suy56/ProofChain/internal/crypto/zkp	8.783s
