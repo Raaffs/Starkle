@@ -107,7 +107,7 @@ type MembershipRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ActualValue   string                 `protobuf:"bytes,1,opt,name=actual_value,json=actualValue,proto3" json:"actual_value,omitempty"`
 	ActualSalt    string                 `protobuf:"bytes,2,opt,name=actual_salt,json=actualSalt,proto3" json:"actual_salt,omitempty"` // Hex string
-	AllLeaves     []string               `protobuf:"bytes,3,rep,name=all_leaves,json=allLeaves,proto3" json:"all_leaves,omitempty"`    // Hex strings
+	Siblings      []string               `protobuf:"bytes,3,rep,name=siblings,proto3" json:"siblings,omitempty"`                       // Hex strings
 	PublicList    []string               `protobuf:"bytes,4,rep,name=public_list,json=publicList,proto3" json:"public_list,omitempty"`
 	PublicRoot    string                 `protobuf:"bytes,5,opt,name=public_root,json=publicRoot,proto3" json:"public_root,omitempty"` // Hex string
 	unknownFields protoimpl.UnknownFields
@@ -158,9 +158,9 @@ func (x *MembershipRequest) GetActualSalt() string {
 	return ""
 }
 
-func (x *MembershipRequest) GetAllLeaves() []string {
+func (x *MembershipRequest) GetSiblings() []string {
 	if x != nil {
-		return x.AllLeaves
+		return x.Siblings
 	}
 	return nil
 }
@@ -183,7 +183,7 @@ type RangeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ActualValue   uint32                 `protobuf:"varint,1,opt,name=actual_value,json=actualValue,proto3" json:"actual_value,omitempty"`
 	ActualSalt    string                 `protobuf:"bytes,2,opt,name=actual_salt,json=actualSalt,proto3" json:"actual_salt,omitempty"` // Hex string
-	AllLeaves     []string               `protobuf:"bytes,3,rep,name=all_leaves,json=allLeaves,proto3" json:"all_leaves,omitempty"`    // Hex strings
+	Siblings      []string               `protobuf:"bytes,3,rep,name=siblings,proto3" json:"siblings,omitempty"`                       // Hex strings
 	LowerBound    uint32                 `protobuf:"varint,4,opt,name=lower_bound,json=lowerBound,proto3" json:"lower_bound,omitempty"`
 	UpperBound    uint32                 `protobuf:"varint,5,opt,name=upper_bound,json=upperBound,proto3" json:"upper_bound,omitempty"`
 	PublicRoot    string                 `protobuf:"bytes,6,opt,name=public_root,json=publicRoot,proto3" json:"public_root,omitempty"` // Hex string
@@ -235,9 +235,9 @@ func (x *RangeRequest) GetActualSalt() string {
 	return ""
 }
 
-func (x *RangeRequest) GetAllLeaves() []string {
+func (x *RangeRequest) GetSiblings() []string {
 	if x != nil {
-		return x.AllLeaves
+		return x.Siblings
 	}
 	return nil
 }
@@ -438,23 +438,21 @@ const file_proto_prover_proto_rawDesc = "" +
 	"membership\x12,\n" +
 	"\x05range\x18\x02 \x01(\v2\x14.prover.RangeRequestH\x00R\x05rangeB\f\n" +
 	"\n" +
-	"proof_data\"\xb8\x01\n" +
+	"proof_data\"\xb5\x01\n" +
 	"\x11MembershipRequest\x12!\n" +
 	"\factual_value\x18\x01 \x01(\tR\vactualValue\x12\x1f\n" +
 	"\vactual_salt\x18\x02 \x01(\tR\n" +
-	"actualSalt\x12\x1d\n" +
-	"\n" +
-	"all_leaves\x18\x03 \x03(\tR\tallLeaves\x12\x1f\n" +
+	"actualSalt\x12\x1a\n" +
+	"\bsiblings\x18\x03 \x03(\tR\bsiblings\x12\x1f\n" +
 	"\vpublic_list\x18\x04 \x03(\tR\n" +
 	"publicList\x12\x1f\n" +
 	"\vpublic_root\x18\x05 \x01(\tR\n" +
-	"publicRoot\"\xd4\x01\n" +
+	"publicRoot\"\xd1\x01\n" +
 	"\fRangeRequest\x12!\n" +
 	"\factual_value\x18\x01 \x01(\rR\vactualValue\x12\x1f\n" +
 	"\vactual_salt\x18\x02 \x01(\tR\n" +
-	"actualSalt\x12\x1d\n" +
-	"\n" +
-	"all_leaves\x18\x03 \x03(\tR\tallLeaves\x12\x1f\n" +
+	"actualSalt\x12\x1a\n" +
+	"\bsiblings\x18\x03 \x03(\tR\bsiblings\x12\x1f\n" +
 	"\vlower_bound\x18\x04 \x01(\rR\n" +
 	"lowerBound\x12\x1f\n" +
 	"\vupper_bound\x18\x05 \x01(\rR\n" +

@@ -68,7 +68,7 @@ func TestRangeProof(t *testing.T) {
 					Range: &pb.RangeRequest{
 						ActualValue: tt.actualValue,
 						ActualSalt:  tt.salt,
-						AllLeaves:   siblings,
+						Siblings:   siblings,
 						LowerBound:  tt.lower,
 						UpperBound:  tt.upper,
 						PublicRoot:  tt.root,
@@ -123,7 +123,7 @@ func TestSetMembershipProof(t *testing.T) {
 					Membership: &pb.MembershipRequest{
 						ActualValue: tt.actualValue,
 						ActualSalt:  tt.salt,
-						AllLeaves:   siblings,
+						Siblings:   siblings,
 						PublicList:  tt.list,
 						PublicRoot:  tt.root,
 					},

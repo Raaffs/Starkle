@@ -54,7 +54,7 @@ func (c *ZKProverClient) RequestMembershipProof(
 			Membership: &pb.MembershipRequest{
 				ActualValue: actualValue,
 				ActualSalt:  actualSalt,
-				AllLeaves:   allLeaves,
+				Siblings:   allLeaves,
 				PublicList:  publicList,
 				PublicRoot:  publicRoot,
 			},
@@ -78,7 +78,7 @@ func (c *ZKProverClient) RequestRangeProof(
 			Range: &pb.RangeRequest{
 				ActualValue: uint32(actualValue),
 				ActualSalt:  actualSalt,
-				AllLeaves:   allLeaves,
+				Siblings:   allLeaves,
 				LowerBound: lowerBound,
 				UpperBound: upperBound,
 				PublicRoot:  publicRoot,

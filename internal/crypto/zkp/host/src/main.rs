@@ -44,7 +44,7 @@ impl ProverService for ProverHost {
                 let env = ExecutorEnv::builder()
                     .write(&m.actual_value).unwrap()
                     .write(&m.actual_salt).unwrap() 
-                    .write(&m.all_leaves).unwrap()  // This is now the Siblings Path
+                    .write(&m.siblings).unwrap()  // This is now the Siblings Path
                     .write(&m.public_list).unwrap()
                     .write(&m.public_root).unwrap() // The target root hex string
                     .build()
@@ -78,7 +78,7 @@ impl ProverService for ProverHost {
                 let env = ExecutorEnv::builder()
                     .write(&r.actual_value).unwrap()
                     .write(&r.actual_salt).unwrap() 
-                    .write(&r.all_leaves).unwrap() 
+                    .write(&r.siblings).unwrap() 
                     .write(&r.lower_bound).unwrap()
                     .write(&r.upper_bound).unwrap()
                     .write(&r.public_root).unwrap()

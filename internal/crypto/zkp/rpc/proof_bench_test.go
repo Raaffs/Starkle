@@ -70,7 +70,7 @@ func BenchmarkProverMembership(b *testing.B) {
 						Membership: &pb.MembershipRequest{
 							ActualValue: target.Value,
 							ActualSalt:  target.Salt,
-							AllLeaves:   siblings, // ONLY THE PATH
+							Siblings:   siblings, // ONLY THE PATH
 							PublicList:  benchmarkPublicList,
 							PublicRoot:  root,
 						},
