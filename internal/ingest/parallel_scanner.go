@@ -51,7 +51,6 @@ func (f *FileProcessor)Discover(ctx context.Context, path string, cmp Comparator
 					defer func() { <-semaphore }()
 			}
 			content,err:=os.ReadFile(p); if err!=nil {
-				fmt.Printf("unable to read file %s : %v\n", p, err)
 				return
 			}
 			if cmp(content){

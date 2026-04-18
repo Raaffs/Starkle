@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -9,15 +10,14 @@ import (
 
 	"github.com/Suy56/ProofChain/internal/crypto/keyUtils"
 	"github.com/Suy56/ProofChain/internal/crypto/zkp"
+	pb "github.com/Suy56/ProofChain/internal/crypto/zkp/rpc/proto"
+	"github.com/Suy56/ProofChain/internal/ingest"
 	mo "github.com/Suy56/ProofChain/internal/models"
 	"github.com/Suy56/ProofChain/internal/users"
 	"github.com/Suy56/ProofChain/internal/utils"
 	"github.com/Suy56/ProofChain/storage/models"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
-
-// func (app *App)autoResvolvePublicKey(target string)(string,error)
-
 func (app *App)Encrypt(file []byte, entity string)([]byte,error){
 	pubKey,err:=app.account.GetPublicKeys(entity);if err!=nil{
 		return nil,err
@@ -86,8 +86,6 @@ func (app *App)GetFileAndPath()([]byte, string, error){
 	return file,filePath,nil
 }
 
-
-
 func (app *App)IsApprovedInstitute()bool{
 	approved,err:=app.account.GetApprovalStatus();if err!=nil{
 		log.Println("Error getting approval status : ",err)
@@ -95,8 +93,6 @@ func (app *App)IsApprovedInstitute()bool{
 	}
 	return approved
 }
-
-
 
 func (app *App)PrepareDigitalCopy(certificate models.CertificateData)(models.Document,string,error){
 	proof:=zkp.NewMerkleProof()
@@ -179,56 +175,110 @@ func mapToCertificateBase[T any, U any](certificate mo.CertificateBase[T]) mo.Ce
     return typedCert
 }
 
-func NormalizeCertificateSchema(decryptedCert []byte) (mo.CertificateBase[mo.LeafFields], error) {
-    // Define the schema wrapper
-    wrapper := struct {
-        SaltedFields mo.CertificateBase[mo.LeafFields] `json:"salted_fields"`
-    }{}
-
-    // Unmarshal the raw data
-    if err := json.Unmarshal(decryptedCert, &wrapper); err != nil {
-        return mo.CertificateBase[mo.LeafFields]{}, fmt.Errorf("failed to unmarshal: %w", err)
-    }
-
-    // Apply the mapping transformation
-    t := mapToCertificateBase[mo.LeafFields, mo.LeafFields](wrapper.SaltedFields)
-
-    return t, nil
+type Proof interface {
+    BuildProofRequest(
+		constraints []string, 
+		actualValue any, 
+		salt string,
+		siblings []string,
+		
+	)*pb.ProofRequest
 }
-// func(app *App) PrepareProofInputs(certificate mo.CertificateBase[mo.LeafFields], publicConstraints []any)(string,error){
-// 	privateInputField:=publicConstraints[0].(string)
-// 	mapper:= make(map[string]mo.LeafFields,0)
 
-// 	for k,v:=range utils.Walk(certificate){
-// 		val,ok:=v.(mo.LeafFields); if !ok{
-// 			app.logger.Error(
-// 					"Error asserting leaf fields",
-// 					"key",k,
-// 					"value",v,
-// 			)		
-// 			continue
-// 		}
+type Range struct{
+	upper int
+	lower int
+	actualValue int
+}
 
-// 		mapper[k]=val
-// 	}
-// 	isRangeProof:=isProofTypeRange(publicConstraints)
-
-// 		return  "",nil
-// }
-
-
-
-
-
-func isProofTypeRange(constraint []any) bool {
-	if len(constraint) != 3 {
-		return false
+func (r Range) BuildProofRequest(
+	constraints []string, 
+	actualValue any, 
+	salt string,
+	siblings []string,
+)*pb.ProofRequest {
+	var ok bool
+	r.actualValue,ok=(actualValue).(int); if !ok{
+		log.Println("error asserting actual value to string for membership proof")
 	}
-
-	_, ok0 := constraint[0].(string)
-	_, ok1 := constraint[1].(int)
-	_, ok2 := constraint[2].(int)
-
-	return ok0 && ok1 && ok2
+	
+	return &pb.ProofRequest{
+		ProofData: &pb.ProofRequest_Range{
+			Range: &pb.RangeRequest{
+				ActualValue: uint32(r.actualValue),
+				ActualSalt:  salt,
+				Siblings:    siblings, 
+				LowerBound:  uint32(r.lower),
+				UpperBound:  uint32(r.upper),
+				PublicRoot:  "", 
+			},
+		},
+	}
 }
 
+type Membership struct{
+	members []string
+	actualValue string
+}
+
+func (m Membership) BuildProofRequest(
+	constraints []string, 
+	actualValue any, 
+	salt string,
+	siblings []string,
+)*pb.ProofRequest {
+	var ok bool
+	m.actualValue,ok=(actualValue).(string); if !ok{
+		log.Println("error asserting actual value to string for membership proof")
+	}
+	return &pb.ProofRequest{
+		ProofData: &pb.ProofRequest_Membership{
+			Membership: &pb.MembershipRequest{
+				ActualValue: m.actualValue,
+				ActualSalt:  salt,
+				Siblings:    siblings, 
+				PublicList:  m.members,
+				PublicRoot:  "",
+			},
+		},
+	}
+}
+
+
+func resolveIngestionMode(mode string, maxWorkers int)ingest.Finder{
+	if mode=="manual"{
+		return ingest.NewSelection()
+	}
+	return ingest.NewParallel(maxWorkers)
+}
+
+func readProofFile(attribute string, constraints []string, finder ingest.Finder)(Proof, []byte,error){
+	attribute,val:=extractProofValues(constraints)
+	switch val := val.(type){
+	case Range:
+		rangeVal:=val
+		bytes,err:=finder.Discover(context.Background(),"",ingest.RangeBuilder(attribute,rangeVal.lower,rangeVal.upper))
+		return val,bytes,err 
+	case Membership:
+		membershipVal:=val
+		targetMembers := make([]any, len(membershipVal.members))
+		for i, member := range membershipVal.members {
+			targetMembers[i] = member
+		}
+		bytes,err:=finder.Discover(context.Background(),"",ingest.Membershipbuilder(attribute,targetMembers))
+		return val,bytes,err
+	default:
+		return nil,nil,fmt.Errorf("invalid proof type")
+	}
+}
+
+func extractProofValues(constraints []string)(string,Proof){
+	if len(constraints)==3{
+		lower,errl:= utils.CoerceToInt(constraints[1]); 
+		upper,erru:=utils.CoerceToInt(constraints[2]); 
+		if errl==nil && erru==nil{
+			return constraints[0],Range{lower: lower,upper: upper}
+		}
+	}
+	return constraints[0],Membership{members: constraints[1:]}
+}

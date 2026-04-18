@@ -8,13 +8,13 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-type SelectionProcessor struct{}
+type ManualSelectionProcessor struct{}
 
-func NewSelection() *SelectionProcessor {
-	return &SelectionProcessor{}
+func NewSelection() *ManualSelectionProcessor {
+	return &ManualSelectionProcessor{}
 }
 
-func (s *SelectionProcessor)Discover(ctx context.Context, path string, cmp Comparator) ([]byte, error) {
+func (s *ManualSelectionProcessor)Discover(ctx context.Context, path string, cmp Comparator) ([]byte, error) {
 	filePath,err:=runtime.OpenFileDialog(ctx,runtime.OpenDialogOptions{
 		Title : "Select Proof",
 		Filters: []runtime.FileFilter{{

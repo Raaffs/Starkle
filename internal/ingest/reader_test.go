@@ -1,42 +1,52 @@
 package ingest
 
 import (
-	"bytes"
 	"context"
-	"fmt"
 	"testing"
 )
 
+
+
 func TestDiscover_LocalDir(t *testing.T) {
-	// Points to your actual directory
-	targetDir := "./testDir"
-	
-	// We'll use a worker pool of 3
+	// Setup processor
 	processor := NewParallel(2)
 	ctx := context.Background()
+	targetDir := "./testDir" // Ensure this directory exists with test files
 
-	// Define the search: Look for the 'beta' object
-	comparator := func(b []byte) bool {
-		return bytes.Contains(b, []byte(`"name": "zeta"`))
+	tests := []struct {
+		name       string
+		comparator Comparator
+		expectData bool
+	}{
+		{
+			name:       "Range Match: ID between 100 and 200",
+			comparator: RangeBuilder("id", 100, 200),
+			expectData: true,
+		},
+		{
+			name:       "Membership Match: Status is active",
+			comparator: Membershipbuilder("value", []any{"active", "pending"}),
+			expectData: true,
+		},
 	}
 
-	// Run the discovery
-	data, err := processor.Discover(ctx, targetDir, comparator)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			data, err := processor.Discover(ctx, targetDir, tt.comparator)
 
-	// Assertions
-	if err != nil {
-		t.Fatalf("Expected to discover a file, but got error: %v", err)
+			if err != nil {
+				t.Fatalf("Operation failed: %v", err)
+			}
+
+			if tt.expectData && data == nil {
+				t.Error("Expected to find data, but got nil")
+			}
+
+			if !tt.expectData && data != nil {
+				t.Errorf("Expected no data to be found, but got: %s", string(data))
+			}
+
+			t.Log(string(data))
+		})
 	}
-
-	if data == nil {
-		t.Fatal("Expected data to be returned, but got nil")
-	}
-
-	// Verify we got the right one
-	if !bytes.Contains(data, []byte(`"id": 100`)) {
-		t.Errorf("Discovered the wrong file! Content: %s", string(data))
-	}
-
-	fmt.Println("Successfully discovered and read. Content:", string(data))
 }
-

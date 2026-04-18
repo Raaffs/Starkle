@@ -12,9 +12,11 @@ import (
 	blockchain "github.com/Suy56/ProofChain/chaincore/core"
 	"github.com/Suy56/ProofChain/internal/crypto/keyUtils"
 	"github.com/Suy56/ProofChain/internal/crypto/zkp"
+	pb "github.com/Suy56/ProofChain/internal/crypto/zkp/rpc/proto"
 	"github.com/Suy56/ProofChain/internal/download"
 	mo "github.com/Suy56/ProofChain/internal/models"
-	proverRPC "github.com/Suy56/ProofChain/internal/crypto/zkp/rpc"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/Suy56/ProofChain/internal/users"
 	"github.com/Suy56/ProofChain/internal/utils"
@@ -502,87 +504,42 @@ func (app *App) Download(hash, instituteName, requesterAddress string) (string, 
 	return "Downloaded successfully", nil
 }
 
-func (app *App) GenerateZKP(hash, instituteName, requesterAddress string, publicConstraint []string )(string, error){
-	decryptedCert, err := app.getDecryptedCertificate(hash, instituteName, requesterAddress)
-    if err != nil {
-        app.logger.Error(
-            "An error occurred while downloading/decrypting certificate",
-            "hash", hash,
-            "err", err,
-        )
-        return "", fmt.Errorf("an error occurred while downloading")
-    }
-	wrapper:= struct {
-		SaltedFields mo.CertificateBase[mo.LeafFields] `json:"salted_fields"`
-	}{}
 
-	if err := json.Unmarshal(decryptedCert, &wrapper); err != nil {
-		return "", fmt.Errorf("could not decode certificate proof: %w", err)
+func (app *App)GenerateZKP(mode string, constraints []string)(string,error){
+	prover,bytes,err:=readProofFile(constraints[0],constraints,resolveIngestionMode(mode,5)); if err!=nil{
+		app.logger.Error("error generating proof ", "err",err)
 	}
-
-	cert := wrapper.SaltedFields
-	attribute:=publicConstraint[0]
-	
-	value,err:=utils.GetAttributeValue(cert,attribute,"Value"); if err!=nil {
-		app.logger.Error(
-			"Failed to get attribute value",
-			"attribute",attribute,
-			"err", err,
-		)
-		return "",fmt.Errorf("invalid public constraints")
+	var merkleProof map[string]mo.LeafFields
+	if err:=json.Unmarshal(bytes,&merkleProof);err!=nil{
+		app.logger.Error("error unmarshalling proof file","err", err)
+		return "",fmt.Errorf("an error occurred while generating proof")
 	}
-	
-	salt,err:=utils.GetAttributeValue(cert,attribute,"Salt"); if err!=nil {
-		app.logger.Error(
-			"Failed to get attribute salt",
-			"attribute",attribute,
-			"err", err,
-		)
-		return "",fmt.Errorf("invalid public constraints")
+	var hashes []string 
+	for _, leaf := range merkleProof {
+		hashes = append(hashes, string(leaf.Hash))
 	}
-
-	var allLeavesHashes []string
-
-	for _, v := range utils.Walk(cert) {
-		hash,err:=utils.GetAttributeValue(v.(mo.LeafFields),"Hash"); if err!=nil {
-			app.logger.Error(
-				"Failed to get leaf hash",
-				"leaf",v,
-				"err", err,
-			)
-			return "",fmt.Errorf("invalid certificate structure")
-		}
-		h,ok:=hash.(string); if !ok{
-			app.logger.Error(
-				"Failed to assert hash to string",
-				"hash",hash,
-			)
-			return "",fmt.Errorf("invalid certificate structure")
-		}
-		allLeavesHashes = append(allLeavesHashes, h)
+	_, siblings:=zkp.GenerateMerklePath(hashes,string(merkleProof[constraints[0]].Hash))
+	client, closeConn,err := getClient(); if err!=nil{
+		app.logger.Error("error creating rpc client","err", err.Error())
+		return "",fmt.Errorf("an error occurred while generating proof")
 	}
-
-	prover,err:= proverRPC.NewZKProverClient("localhost:50051"); if err!=nil{
-		app.logger.Error(
-			"Failed to connect to the prover service",
-			"err", err,
-		)
-		return "",fmt.Errorf("could not connect to the proof generation service")
+	defer closeConn()
+	req:=prover.BuildProofRequest(constraints,merkleProof[constraints[0]].Value,merkleProof[constraints[0]].Salt,siblings)
+	resp, err := client.GenerateProof(context.Background(), req)
+	if err != nil {
+		app.logger.Error("error generating proof from rpc","err", err)
+		return "",fmt.Errorf("an error occurred while generating proof")
 	}
-
-	val,ok:=value.(string);if !ok{
-		log.Println("fuck you")
-		return "",fmt.Errorf("invalid value type in certificate")
-	}
-
-	prover.RequestMembershipProof(
-		app.ctx,
-		val,
-		salt.(string),
-		allLeavesHashes,
-		publicConstraint[1:],
-		"",
-	)
-
-	return "proof generated successfully",nil
+	return fmt.Sprintf("Proof generated successfully. Receipt ID: %s | Cycles: %d", resp.ReceiptId, resp.Cycles), nil
 }
+
+func getClient() (pb.ProverServiceClient, func(),error) {
+	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil,nil,fmt.Errorf("Failed to connect: %v", err)
+	}
+	client := pb.NewProverServiceClient(conn)
+	return client, func() { conn.Close() },nil
+}
+
+
