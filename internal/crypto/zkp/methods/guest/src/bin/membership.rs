@@ -36,7 +36,6 @@ fn main() {
     let mut current_hash_hex = digest_to_hex(&leaf_digest);
     env::log(&current_hash_hex);
 
-    // 3. Climb the tree using siblings
     for sibling in siblings {
         let mut combined = String::with_capacity(128);
         if current_hash_hex < sibling {

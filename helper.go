@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"slices"
 
 	"github.com/Suy56/ProofChain/internal/crypto/keyUtils"
 	"github.com/Suy56/ProofChain/internal/crypto/zkp"
@@ -17,7 +18,19 @@ import (
 	"github.com/Suy56/ProofChain/internal/utils"
 	"github.com/Suy56/ProofChain/storage/models"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
+
+func getClient() (pb.ProverServiceClient, func(),error) {
+	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil,nil,fmt.Errorf("Failed to connect: %v", err)
+	}
+	client := pb.NewProverServiceClient(conn)
+	return client, func() { conn.Close() },nil
+}
+
 func (app *App)Encrypt(file []byte, entity string)([]byte,error){
 	pubKey,err:=app.account.GetPublicKeys(entity);if err!=nil{
 		return nil,err
@@ -46,11 +59,9 @@ func(app *App)TryDecrypt(encryptedDocument []byte,institute string,user string)(
 	if _,ok:=app.account.(*users.Verifier); ok{
 		targetEntity=user
 	}
-
 	pub,err:=app.account.GetPublicKeys(targetEntity); if err!=nil{
 		return nil,fmt.Errorf("helper.go: error retrieving public keys %w",err)
 	}
-	log.Println("public key of ins: ",pub)
 	if err:=app.keys.SetMultiSigKey(pub);err!=nil{
 		log.Println("error setting multisigkey: ",err)
 		return nil,fmt.Errorf("Error retrieving multi-sig keys")
@@ -121,6 +132,37 @@ func (app *App)PrepareDigitalCopy(certificate models.CertificateData)(models.Doc
 	return doc,string(publicCommit),nil
 }
 
+func (app *App) FetchAndParseCertificate(hash, instituteName, requesterAddress string) (mo.CertificateBase[mo.LeafFields], error) {
+	var tester map[string]any
+    decryptedCert, err := app.getDecryptedCertificate(hash, instituteName, requesterAddress)
+    if err != nil {
+        app.logger.Error(
+            "An error occurred while downloading/decrypting certificate",
+            "hash", hash,
+            "err", err,
+        )
+        return mo.CertificateBase[mo.LeafFields]{}, fmt.Errorf("an error occurred while downloading")
+    }
+
+    var wrapper struct {
+        SaltedFields mo.CertificateBase[mo.LeafFields] `json:"salted_fields"`
+    }
+
+    if err := json.Unmarshal(decryptedCert, &wrapper); err != nil {
+        app.logger.Error(
+            "Error unmarshaling decrypted certificate",
+            "hash", hash,
+            "institute", instituteName,
+            "req addr", requesterAddress,
+            "err", err,
+        )
+        return mo.CertificateBase[mo.LeafFields]{}, fmt.Errorf("an error occurred while downloading")
+    }
+	json.Unmarshal(decryptedCert, &tester)
+	log.Println(" tester decrypted cert: ",tester)
+    return wrapper.SaltedFields, nil
+}
+
 func (app *App) getDecryptedCertificate(hash, instituteName, requesterAddress string) ([]byte, error) {
     encryptedCert, err := app.storage.RetrieveDocument(hash)
     if err != nil {
@@ -135,7 +177,6 @@ func (app *App) getDecryptedCertificate(hash, instituteName, requesterAddress st
 
     decryptedCert, err := app.TryDecrypt(encryptedCert.EncryptedDocument, instituteName, requesterAddress)
     if err != nil {
-        log.Println("Error decrypting:", err)
         return nil, fmt.Errorf("error decrypting document")
     }
 
@@ -161,15 +202,37 @@ func (app *App) getDecryptedCertificate(hash, instituteName, requesterAddress st
 func mapToCertificateBase[T any, U any](certificate mo.CertificateBase[T]) mo.CertificateBase[U] {
     var typedCert mo.CertificateBase[U]
     vCert := reflect.ValueOf(&typedCert).Elem()
+    
+    // Identify if the struct has a Map field to collect 'extra' values
+    var mapField reflect.Value
+    for i := 0; i < vCert.NumField(); i++ {
+        if vCert.Field(i).Kind() == reflect.Map {
+            mapField = vCert.Field(i)
+            // Initialize the map if it's nil
+            if mapField.IsNil() {
+                mapField.Set(reflect.MakeMap(mapField.Type()))
+            }
+            break
+        }
+    }
+
     for k, v := range utils.Walk(certificate) {
         field := vCert.FieldByName(k)
-        if !field.IsValid() || !field.CanSet() {
-            continue
-        }
+        
+        // Coerce value before assignment
+        var finalValue reflect.Value
         if val, err := utils.CoerceToInt(fmt.Sprint(v)); err == nil {
-            field.Set(reflect.ValueOf(val))
+            finalValue = reflect.ValueOf(val)
         } else {
-            field.Set(reflect.ValueOf(v))
+            finalValue = reflect.ValueOf(v)
+        }
+        
+        if field.IsValid() && field.CanSet() {
+            // Standard field assignment
+            field.Set(finalValue)
+        } else if mapField.IsValid() {
+            // Insert coerced value into the struct's map field
+            mapField.SetMapIndex(reflect.ValueOf(k), finalValue)
         }
     }
     return typedCert
@@ -180,6 +243,7 @@ type Proof interface {
 		constraints []string, 
 		actualValue any, 
 		salt string,
+		expectedRoot string,
 		siblings []string,
 		
 	)*pb.ProofRequest
@@ -195,12 +259,19 @@ func (r Range) BuildProofRequest(
 	constraints []string, 
 	actualValue any, 
 	salt string,
+	expectedRoot string,
 	siblings []string,
 )*pb.ProofRequest {
-	var ok bool
-	r.actualValue,ok=(actualValue).(int); if !ok{
-		log.Println("error asserting actual value to string for membership proof")
-	}
+	switch v := actualValue.(type) {
+		case float64:
+    		r.actualValue = int(v)
+		case int:
+   			 r.actualValue = v
+		case int64:
+    		r.actualValue = int(v)
+	default:
+	    log.Printf("Unsupported type %T for value %v", v, v)
+}
 	
 	return &pb.ProofRequest{
 		ProofData: &pb.ProofRequest_Range{
@@ -210,7 +281,7 @@ func (r Range) BuildProofRequest(
 				Siblings:    siblings, 
 				LowerBound:  uint32(r.lower),
 				UpperBound:  uint32(r.upper),
-				PublicRoot:  "", 
+				PublicRoot:  expectedRoot, 
 			},
 		},
 	}
@@ -225,11 +296,13 @@ func (m Membership) BuildProofRequest(
 	constraints []string, 
 	actualValue any, 
 	salt string,
+	expectedRoot string,
 	siblings []string,
 )*pb.ProofRequest {
 	var ok bool
 	m.actualValue,ok=(actualValue).(string); if !ok{
-		log.Println("error asserting actual value to string for membership proof")
+		log.Println("error asserting actual value to string for membership proof", "actual value: ",actualValue,"constraints: ",constraints)
+		log.Printf("Expected int, but got type %T with value %v", actualValue, actualValue)
 	}
 	return &pb.ProofRequest{
 		ProofData: &pb.ProofRequest_Membership{
@@ -238,7 +311,7 @@ func (m Membership) BuildProofRequest(
 				ActualSalt:  salt,
 				Siblings:    siblings, 
 				PublicList:  m.members,
-				PublicRoot:  "",
+				PublicRoot:  expectedRoot,
 			},
 		},
 	}
@@ -252,12 +325,14 @@ func resolveIngestionMode(mode string, maxWorkers int)ingest.Finder{
 	return ingest.NewParallel(maxWorkers)
 }
 
-func readProofFile(attribute string, constraints []string, finder ingest.Finder)(Proof, []byte,error){
+func readProofFile(attribute string, constraints []string, path string, finder ingest.Finder)(Proof, []byte,error){
 	attribute,val:=extractProofValues(constraints)
 	switch val := val.(type){
 	case Range:
 		rangeVal:=val
-		bytes,err:=finder.Discover(context.Background(),"",ingest.RangeBuilder(attribute,rangeVal.lower,rangeVal.upper))
+		bytes,err:=finder.Discover(context.Background(),path, func(b []byte) bool {
+			return rangeComparator(b, attribute, rangeVal.lower, rangeVal.upper)
+		})
 		return val,bytes,err 
 	case Membership:
 		membershipVal:=val
@@ -265,7 +340,9 @@ func readProofFile(attribute string, constraints []string, finder ingest.Finder)
 		for i, member := range membershipVal.members {
 			targetMembers[i] = member
 		}
-		bytes,err:=finder.Discover(context.Background(),"",ingest.Membershipbuilder(attribute,targetMembers))
+		bytes,err:=finder.Discover(context.Background(),path,func(b []byte) bool {
+			return memerbshipComparator(b, attribute, targetMembers)
+		})
 		return val,bytes,err
 	default:
 		return nil,nil,fmt.Errorf("invalid proof type")
@@ -281,4 +358,36 @@ func extractProofValues(constraints []string)(string,Proof){
 		}
 	}
 	return constraints[0],Membership{members: constraints[1:]}
+}
+
+var memerbshipComparator = func (rawJson []byte, field string, targets []any) bool {
+	var data map[string]mo.LeafFields
+	if err := json.Unmarshal(rawJson, &data); err != nil {
+		return false
+	}
+	val, exists := data[field]
+	if !exists {
+		return false
+	}
+	return slices.Contains(targets, val.Value)
+}
+
+var rangeComparator = func (rawJson []byte, field string, lower int, upper int) bool {
+	var data map[string]mo.LeafFields
+	if err := json.Unmarshal(rawJson, &data); err != nil {
+		return false
+	}
+	val, exists := data[field]
+	if !exists {
+		return false
+	}
+	// JSON numbers unmarshal as float64. We convert to float for the comparison
+	// or cast to int if we're sure it's a whole number.
+	num, ok := val.Value.(float64)
+	if !ok {
+		return false
+	}
+
+	intVal := int(num)
+	return intVal >= lower && intVal <= upper
 }

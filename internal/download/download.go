@@ -1,14 +1,11 @@
 package download
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strings"
 
 	"github.com/Suy56/ProofChain/internal/models"
 	"github.com/Suy56/ProofChain/internal/utils"
@@ -24,17 +21,17 @@ type Downloader struct {
 	logger    *slog.Logger
 }
 
-func NewDownloader(certificate DownloadProof, logger *slog.Logger) (*Downloader, error) {
-	basePath, err := getDownloadDir()
+func New(certificate DownloadProof, logger *slog.Logger, user string) (*Downloader, error) {
+	basePath, err := utils.GetDirPath("Downloads")
 	if err != nil {
 		return nil, err
 	}
 
-	val,ok:=certificate.CertificateName.Value.(string);if !ok{
+	certName,ok:=certificate.CertificateName.Value.(string);if !ok{
 		return nil, fmt.Errorf("invalid certificate name value. Expected: string got %v", certificate.CertificateName.Value)
 	}
 
-	finalDir := filepath.Join(basePath, val)
+	finalDir := filepath.Join(basePath, user , certName)
 
 	return &Downloader{
 		TargetDir: finalDir,
@@ -98,32 +95,3 @@ func (d *Downloader) store(key string, proof any) error {
 	filename := filepath.Join(d.TargetDir, key+".json")
 	return os.WriteFile(filename, data, 0644)
 }
-
-
-func getDownloadDir() (string, error) {
-	var downloadDir string
-	// 1. Try Linux standard
-	cmd := exec.Command("xdg-user-dir", "DOWNLOAD")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	if err := cmd.Run(); err == nil {
-		downloadDir = strings.TrimSpace(out.String())
-	}
-
-	// 2. Fallback for macOS/Other
-	if downloadDir == "" {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return "", fmt.Errorf("failed to detect home directory: %w", err)
-		}
-		downloadDir = filepath.Join(home, "Downloads")
-	}
-
-	finalPath := filepath.Join(downloadDir, "ProofChain")
-	if err := os.MkdirAll(finalPath, 0755); err != nil {
-		return "", fmt.Errorf("failed to ensure ProofChain directory: %w", err)
-	}
-
-	return finalPath, nil
-}
-

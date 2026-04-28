@@ -9,6 +9,12 @@ export function Download(arg1:string,arg2:string,arg3:string):Promise<string>;
 
 export function Encrypt(arg1:Array<number>,arg2:string):Promise<Array<number>>;
 
+export function FetchAndParseCertificate(arg1:string,arg2:string,arg3:string):Promise<models.CertificateBase_github_com_Suy56_ProofChain_internal_models_LeafFields_>;
+
+export function GenerateZKPOffline(arg1:string,arg2:Array<string>):Promise<string>;
+
+export function GenerateZKPOnline(arg1:string,arg2:Array<string>):Promise<string>;
+
 export function GetAcceptedDocs():Promise<Array<blockchain.VerificationDocument>>;
 
 export function GetAllDocs():Promise<Array<blockchain.VerificationDocument>>;

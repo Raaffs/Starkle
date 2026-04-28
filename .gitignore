@@ -18,7 +18,8 @@ concept
 startup
 receipts/*
 test_results/*
-
+internal/crypto/zkp/frontend/*
+internal/crypto/zkp/verifier-wasm/*
 # Test binary, built with `go test -c`
 *.test
 .config_test.json

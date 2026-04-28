@@ -8,15 +8,13 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"path/filepath"
 
 	blockchain "github.com/Suy56/ProofChain/chaincore/core"
 	"github.com/Suy56/ProofChain/internal/crypto/keyUtils"
 	"github.com/Suy56/ProofChain/internal/crypto/zkp"
-	pb "github.com/Suy56/ProofChain/internal/crypto/zkp/rpc/proto"
 	"github.com/Suy56/ProofChain/internal/download"
 	mo "github.com/Suy56/ProofChain/internal/models"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/Suy56/ProofChain/internal/users"
 	"github.com/Suy56/ProofChain/internal/utils"
@@ -42,7 +40,6 @@ type App struct {
 	keys    *keyUtils.ECKeys
 	envMap  map[string]any
 	storage *storageclient.Client
-	proof   zkp.ZKProof
 	config  Config
 	logger  *slog.Logger
 }
@@ -61,7 +58,6 @@ func (app *App) startup(ctx context.Context) {
 	if err := app.config.Load(); err != nil {
 		log.Fatalf("Fatal error: loading config failed\n%v", err)
 	}
-	app.proof = zkp.NewMerkleProof()
 	app.storage = storageclient.New(app.config.Services.STORAGE)
 	app.logger = NewLogger(os.Stdout)
 }
@@ -109,7 +105,7 @@ func (app *App) Login(username string, password string) error {
 				"Error connecting to the blockchain",
 				"endpoint", app.config.Services.RPC_PROVIDERS_URLS.Local,
 				"contract address", app.config.Services.CONTRACT_ADDR,
-				"err", err,
+				"err", err.Error(),
 			)
 			return fmt.Errorf("error connecting to the blockchain")
 		}
@@ -119,7 +115,7 @@ func (app *App) Login(username string, password string) error {
 				"Error getting the account verification status",
 				"username", username,
 				"is approved", approved,
-				"err", err,
+				"err", err.Error(),
 			)
 			return fmt.Errorf("error getting the account verification status")
 		}
@@ -172,7 +168,7 @@ func (app *App) Register(privateKeyString, name, password string, isInstitute bo
 			"Error connecting to the blockchain",
 			"endpoint", app.config.Services.RPC_PROVIDERS_URLS.Local,
 			"contract address", app.config.Services.CONTRACT_ADDR,
-			"err", err,
+			"err", err.Error(),
 		)
 		return fmt.Errorf("error connecting to the blockchain")
 	}
@@ -202,9 +198,9 @@ func (app *App) Register(privateKeyString, name, password string, isInstitute bo
 		return nil
 	})
 	if err := g.Wait(); err != nil {
-		app.logger.Error("Error registering user", "err", err)
+		app.logger.Error("Error registering user", "err", err.Error())
 
-		return fmt.Errorf("error connecting to blockchain")
+		return fmt.Errorf("An error occurred while registering user")
 	}
 
 	if err := app.config.AddProfile(name, accountPath, keyPath, identityPath); err != nil {
@@ -219,7 +215,7 @@ func (app *App) Register(privateKeyString, name, password string, isInstitute bo
 			app.logger.Error(
 				"Error registering the institute",
 				"name", name,
-				"err", err,
+				"err", err.Error(),
 			)
 			return fmt.Errorf("error registering institution")
 		}
@@ -228,7 +224,7 @@ func (app *App) Register(privateKeyString, name, password string, isInstitute bo
 		requester := &users.Requester{Conn: c, Instance: i}
 		app.account = requester
 		if err := app.account.Register(publicKey, name); err != nil {
-			app.logger.Error("error registering requester","err", err)
+			app.logger.Error("error registering requester","err", err.Error())
 			return fmt.Errorf("error registering institution")
 		}
 		app.account.SetName(name)
@@ -400,11 +396,13 @@ func (app *App) IssueCertificate(certificate models.CertificateData) (msg string
         )
         return "",err
     }
+	log.Println(certificate)	
     cert, publicCommit, err := app.PrepareDigitalCopy(certificate)
     if err != nil {
         app.logger.Error("Error preparing digital copy","err", err)
         return "",fmt.Errorf("An error occurred while issuing certificate")
     }
+	
     if _, err := app.account.GetInstance().Instance.AddCertificate(
         app.account.GetTxOpts(),
         publicCommit,
@@ -422,25 +420,10 @@ func (app *App) IssueCertificate(certificate models.CertificateData) (msg string
 }
 
 func (app *App) ViewDocument(shahash, instituteName, requesterAddress string) (string, error) {
-    encryptedDocument, err := app.storage.RetrieveDocument(shahash)
-    if err != nil {
-        app.logger.Error(
-            "Error retrieving document",
-            "hash", shahash,
-            "err", err,
-        )
-        return "", fmt.Errorf("Error retrieving document")
-    }
-    decryptedDoc, err := app.TryDecrypt(encryptedDocument.EncryptedDocument, instituteName, requesterAddress)
-    if err != nil {
-        app.logger.Error(
-            "Error decrypting document",
-            "hash", shahash,
-            "requester", requesterAddress,
-            "err", err,
-        )
-        return "", fmt.Errorf("Error decrypting document")
-    }
+    decryptedDoc, err := app.getDecryptedCertificate(shahash, instituteName, requesterAddress); if err != nil {
+		app.logger.Error("Error decrypting document","err", err)
+		return "", fmt.Errorf("an error occurred while retrieving document")
+	}
     encodedDocument := base64.StdEncoding.EncodeToString(decryptedDoc)
     return encodedDocument, nil
 }
@@ -466,32 +449,13 @@ func (app *App) ViewDigitalCertificate(hash, instituteName, requesterAddress str
 }
 
 func (app *App) Download(hash, instituteName, requesterAddress string) (string, error) {
-	decryptedCert, err := app.getDecryptedCertificate(hash, instituteName, requesterAddress)
-    if err != nil {
-        app.logger.Error(
-            "An error occurred while downloading/decrypting certificate",
-            "hash", hash,
-            "err", err,
-        )
-        return "", fmt.Errorf("an error occurred while downloading")
-    }
-
-	var wrapper struct {
-		SaltedFields mo.CertificateBase[mo.LeafFields] `json:"salted_fields"`
+	
+    certificate,err:=app.FetchAndParseCertificate(hash,instituteName,requesterAddress); if err!=nil{
+		app.logger.Error("Error fetching and parsing certificate","err", err)
+		return "",fmt.Errorf("an error occurred while downloading")
 	}
 
-	if err := json.Unmarshal(decryptedCert, &wrapper); err != nil {
-		app.logger.Error(
-			"Error unmarshaling decrypted certificate",
-			"hash", hash,
-			"institute", instituteName,
-			"req addr", requesterAddress,
-			"err", err,
-		)
-		return "", fmt.Errorf("an error occurred while downloading")
-	}
-
-	downloader, err := download.NewDownloader(wrapper.SaltedFields, NewLogger(os.Stdout))
+	downloader, err := download.New(certificate, NewLogger(os.Stdout), app.account.GetName())
 	if err != nil {
 		log.Println("error downloading: ",err)
 		app.logger.Error("error creating new downloader","err", err)
@@ -505,41 +469,41 @@ func (app *App) Download(hash, instituteName, requesterAddress string) (string, 
 }
 
 
-func (app *App)GenerateZKP(mode string, constraints []string)(string,error){
-	prover,bytes,err:=readProofFile(constraints[0],constraints,resolveIngestionMode(mode,5)); if err!=nil{
-		app.logger.Error("error generating proof ", "err",err)
+func (app *App)GenerateZKPOffline(mode string, constraints []string)(string,error){
+	basePath, err := utils.GetDirPath("Downloads")
+	if err != nil {
+		return "", err
+	}
+	userPath:=filepath.Join(basePath,app.account.GetName())
+	prover,bytes,err:=readProofFile(constraints[0],constraints,userPath,resolveIngestionMode(mode,64)); if err!=nil{
+		app.logger.Error("error generating proof ", "err",err.Error())
+		return "",fmt.Errorf("no file found for the given constraints")
 	}
 	var merkleProof map[string]mo.LeafFields
 	if err:=json.Unmarshal(bytes,&merkleProof);err!=nil{
-		app.logger.Error("error unmarshalling proof file","err", err)
+		app.logger.Error("error unmarshalling proof file","err", err.Error())
 		return "",fmt.Errorf("an error occurred while generating proof")
 	}
 	var hashes []string 
 	for _, leaf := range merkleProof {
 		hashes = append(hashes, string(leaf.Hash))
 	}
-	_, siblings:=zkp.GenerateMerklePath(hashes,string(merkleProof[constraints[0]].Hash))
+	root, siblings:=zkp.GenerateMerklePath(hashes,string(merkleProof[constraints[0]].Hash))
 	client, closeConn,err := getClient(); if err!=nil{
 		app.logger.Error("error creating rpc client","err", err.Error())
 		return "",fmt.Errorf("an error occurred while generating proof")
 	}
 	defer closeConn()
-	req:=prover.BuildProofRequest(constraints,merkleProof[constraints[0]].Value,merkleProof[constraints[0]].Salt,siblings)
+	req:=prover.BuildProofRequest(constraints,merkleProof[constraints[0]].Value,merkleProof[constraints[0]].Salt,root,siblings)
 	resp, err := client.GenerateProof(context.Background(), req)
 	if err != nil {
-		app.logger.Error("error generating proof from rpc","err", err)
+		app.logger.Error("error generating proof from rpc","err", err.Error())
 		return "",fmt.Errorf("an error occurred while generating proof")
 	}
-	return fmt.Sprintf("Proof generated successfully. Receipt ID: %s | Cycles: %d", resp.ReceiptId, resp.Cycles), nil
+	app.logger.Info("Proof generated successfully", "receipt id", resp.ReceiptId, "cycles used", resp.Cycles)
+	return fmt.Sprintf("Proof generated successfully. Receipt ID: %s", resp.ReceiptId), nil
 }
 
-func getClient() (pb.ProverServiceClient, func(),error) {
-	conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil,nil,fmt.Errorf("Failed to connect: %v", err)
-	}
-	client := pb.NewProverServiceClient(conn)
-	return client, func() { conn.Close() },nil
+func (app *App)GenerateZKPOnline(mode string, constraints []string)(string,error){
+	return "",nil
 }
-
-

@@ -24,7 +24,7 @@ func TestExtractProofValues_WithExtra(t *testing.T) {
 			},
 		},
 	}
-	d,err:=NewDownloader(input, slog.New(slog.NewJSONHandler(os.Stdout,nil)));if err!=nil{
+	d,err:=New(input, slog.New(slog.NewJSONHandler(os.Stdout,nil)),"test dir 2");if err!=nil{
 		t.Fatal("error initializing downloader %w",err)
 	}
 	if err:=d.Exec();err!=nil{

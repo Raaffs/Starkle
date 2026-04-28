@@ -14,6 +14,18 @@ export function Encrypt(arg1, arg2) {
   return window['go']['main']['App']['Encrypt'](arg1, arg2);
 }
 
+export function FetchAndParseCertificate(arg1, arg2, arg3) {
+  return window['go']['main']['App']['FetchAndParseCertificate'](arg1, arg2, arg3);
+}
+
+export function GenerateZKPOffline(arg1, arg2) {
+  return window['go']['main']['App']['GenerateZKPOffline'](arg1, arg2);
+}
+
+export function GenerateZKPOnline(arg1, arg2) {
+  return window['go']['main']['App']['GenerateZKPOnline'](arg1, arg2);
+}
+
 export function GetAcceptedDocs() {
   return window['go']['main']['App']['GetAcceptedDocs']();
 }

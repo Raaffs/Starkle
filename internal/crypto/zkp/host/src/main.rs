@@ -37,7 +37,7 @@ impl ProverService for ProverHost {
         
         match req.proof_data {
             Some(ProofData::Membership(m)) => {
-                println!("🚀 Received Membership Proof Request (Path length: {})", m.all_leaves.len());
+                println!("🚀 Received Membership Proof Request (Path length: {})", m.siblings.len());
                 
                 // We pass the root as a string because the Guest is reconstructing the 
                 // root as a hex string to stay 1:1 compatible with your Go logic.
@@ -73,7 +73,7 @@ impl ProverService for ProverHost {
             },
 
             Some(ProofData::Range(r)) => {
-                println!("🚀 Received Range Proof Request ({} leaves)", r.all_leaves.len());
+                println!("🚀 Received Range Proof Request ({} leaves)", r.siblings.len());
 
                 let env = ExecutorEnv::builder()
                     .write(&r.actual_value).unwrap()
@@ -138,10 +138,13 @@ impl ProverService for ProverHost {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    println!("--- Image IDs for Frontend ---");
+    println!("MEMBERSHIP_ID: 0x{}", hex::encode(Digest::from(MEMBERSHIP_ID)));
+    println!("RANGE_ID:      0x{}", hex::encode(Digest::from(RANGE_ID)));
+    println!("------------------------------");
     let addr = "127.0.0.1:50051".parse()?; 
     println!("✅ ZKP Prover gRPC Server running on {}", addr);
 
-    // 100MB message limit
     let max_msg_size = 100 * 1024 * 1024; 
 
     Server::builder()

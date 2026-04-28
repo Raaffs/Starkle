@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["host", "methods", "methods/guest"]
+members = ["host", "methods", "methods/guest", "verifier-wasm"]
 
 [profile.dev]
 opt-level = 3

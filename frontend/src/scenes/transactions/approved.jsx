@@ -10,6 +10,7 @@ import DownloadForOfflineSharpIcon from "@mui/icons-material/DownloadForOfflineS
 import { ViewDigitalCertificate } from "../../../wailsjs/go/main/App";
 import IssueCard from "../../components/cards/certificate";
 import PopUp from "../../components/PopUp";
+import ZKPModal from "../../components/modal/proof";
 const ApprovedDocuments = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -18,6 +19,9 @@ const ApprovedDocuments = () => {
   const [modal, setModal] = useState(false);
   const [certificate, setCertificate] = useState(null);
   const [message, setMessage] = useState("");
+  const [zkpModalOpen, setZkpModalOpen] = useState(false);
+  const openZKPModal = () => setZkpModalOpen(true);
+  const closeZKPModal = () => setZkpModalOpen(false);
 
   useEffect(() => {
     const getDocuments = () => {
@@ -179,6 +183,19 @@ const ApprovedDocuments = () => {
       m="20px"
       sx={{ width: "dynamic", maxWidth: "95%", justifyContent: "center" }}
     >
+       <Button
+        onClick={openZKPModal}
+        sx={{
+              "&.Mui-disabled": {
+                opacity: 0.45,
+                color: "white !important",
+                background:
+                  "linear-gradient(90deg, #E94057 10%, #F27121 90%) !important",
+              },
+            }}
+      >Auto Generate Proof
+      </Button>
+
             {error && (
         <PopUp
           Error={error}
@@ -236,14 +253,15 @@ const ApprovedDocuments = () => {
             color: `${colors.greenAccent[200]} !important`,
           },
         }}
-      >
-        <DataGrid
+      >        <DataGrid
           columns={columns}
           rows={docs}
           getRowId={(row) => row.ID} // Use `ID` as a unique identifier
           sx={theme.palette.mode === "dark" ? DataGridDarkSx : DataGridSx}
         />
       </Box>
+     
+      <ZKPModal open={zkpModalOpen} onClose={closeZKPModal} />
       <Modal
         onClose={() => {
           setModal(false);

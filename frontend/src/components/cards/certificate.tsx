@@ -309,6 +309,7 @@ const IssueCard: React.FC<IssueCardProps> = ({ data: incomingData, viewTitle, on
           size="large"
           sx={{ mt: 3 }}
           onClick={()=>{
+            console.log("Issuing certificate with data:", data); // Debug log to check the data being issued
             onIssue(data);
           }}
         >

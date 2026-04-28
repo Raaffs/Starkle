@@ -1,0 +1,63 @@
+{
+    "profiles": {
+        "Dave": {
+            "accountPath": "/home/Ark/.config/proofchain/account/UTC--2026-03-21T05-58-51.784905866Z--beace3925a6324f9a8b51a8ae8bf4e620bf69493",
+            "keyPath": "/home/Ark/.config/proofchain/key/1774072731814343263",
+            "identityPath": ""
+        },
+        "Maria": {
+            "accountPath": "/home/Ark/.config/proofchain/account/UTC--2025-12-06T13-03-13.806544668Z--c9b0645537e4806229364f395424f6fa57476a24",
+            "keyPath": "/home/Ark/.config/proofchain/key/1765026193811290412",
+            "identityPath": ""
+        },
+        "ins": {
+            "accountPath": "/home/Ark/.config/proofchain/account/UTC--2025-12-06T13-03-44.135552579Z--70fbad5fe3510c5786b2bef367bd9f94c5aec67a",
+            "keyPath": "/home/Ark/.config/proofchain/key/1765026224138359281",
+            "identityPath": ""
+        },
+        "ins2": {
+            "accountPath": "/home/Ark/.config/proofchain/account/UTC--2026-03-20T03-46-17.220276410Z--8eecf3de20302f985473556377e9cdca8459caeb",
+            "keyPath": "/home/Ark/.config/proofchain/key/1773978377234914637",
+            "identityPath": ""
+        },
+        "ins3": {
+            "accountPath": "/home/Ark/.config/proofchain/account/UTC--2026-03-21T06-04-32.191666025Z--dec03138330bef80f216c150983c1f807b4639b6",
+            "keyPath": "/home/Ark/.config/proofchain/key/1774073072226991441",
+            "identityPath": ""
+        },
+        "ins4": {
+            "accountPath": "/home/Ark/.config/proofchain/account/UTC--2026-03-21T06-14-22.773643696Z--5830848181c45777d4a6192e71a41b1e7b6e9d1c",
+            "keyPath": "/home/Ark/.config/proofchain/key/1774073662813130903",
+            "identityPath": ""
+        },
+        "users2": {
+            "accountPath": "/home/Ark/.config/proofchain/account/UTC--2026-02-09T00-51-42.044985156Z--f76872c201499d19c1efac60d23dc805944ecaa9",
+            "keyPath": "/home/Ark/.config/proofchain/key/1770598302054085230",
+            "identityPath": ""
+        }
+    },
+    "dirs": {
+        "identity": ".config/proofchain/identity",
+        "account": ".config/proofchain/account",
+        "key": ".config/proofchain/key",
+        "proofs": ""
+    },
+    "services": {
+        "STORAGE": "http://localhost:8754/",
+        "CONTRACT_ADDR": "0x1Da26345D7d4e24a148C2B49E9b2C8af2e3e5239",
+        "RPC_PROVIDERS_URLS": {
+            "local": {
+                "Ganache": "http://localhost:8545"
+            },
+            "public": {
+                "Ankr": "https://rpc.ankr.com/eth",
+                "CloudFlare": "https://cloudflare-eth.com",
+                "Flashbots": "https://rpc.flashbots.net/fast",
+                "dRPC": "https://eth.drpc.org"
+            },
+            "private": {
+                "Infura": ""
+            }
+        }
+    }
+}

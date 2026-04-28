@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
-
 )
 
 type FileProcessor struct {
@@ -20,60 +19,71 @@ func NewParallel(maxWorkers int) *FileProcessor {
 	return &FileProcessor{MaxWorkers: maxWorkers}
 }
 
-func (f *FileProcessor)Discover(ctx context.Context, path string, cmp Comparator) ([]byte, error) {
-	entries,err:=os.ReadDir(path); if err!=nil {
-		return nil, fmt.Errorf("unable to files at path %s : %w", path, err)
-	}
+func (f *FileProcessor) Discover(ctx context.Context, path string, cmp Comparator) ([]byte, error) {
+    var files []string
 
-	var files []string
+    // Recursively find all .json files in path and subdirectories
+    err := filepath.WalkDir(path, func(p string, d os.DirEntry, err error) error {
+        if err != nil {
+            return err
+        }
+        if !d.IsDir() && filepath.Ext(p) == ".json" {
+            files = append(files, p)
+        }
+        return nil
+    })
 
-	for _, entry := range entries {
-		if !entry.IsDir() && filepath.Ext(entry.Name())==".json" {
-			files = append(files, filepath.Join(path, entry.Name()))
-		}	
-	}
+    if err != nil {
+        return nil, fmt.Errorf("unable to scan path %s: %w", path, err)
+    }
 
-	searchCtx,cancel:=context.WithCancel(ctx)
-	defer cancel()
+    searchCtx, cancel := context.WithCancel(ctx)
+    defer cancel()
 
-	var wg sync.WaitGroup
-	semaphore:= make(chan struct{}, f.MaxWorkers)
-	resultChan := make(chan []byte, 1)
+    var wg sync.WaitGroup
+    semaphore := make(chan struct{}, f.MaxWorkers)
+    resultChan := make(chan []byte, 1)
 
-	for _, p:=range files{
-		wg.Add(1)
-		go func(p string)  {
-			defer wg.Done()
-			select{
-				case <-searchCtx.Done():
-					return
-				case semaphore<- struct{}{}:
-					defer func() { <-semaphore }()
-			}
-			content,err:=os.ReadFile(p); if err!=nil {
-				return
-			}
-			if cmp(content){
-				select{
-					case resultChan<- content:
-						cancel()
-					default:
-				}
-			}
-		}(p)
-	}
-	go func() {
-		wg.Wait()
-		close(resultChan)
-	}()
+    for _, p := range files {
+        wg.Add(1)
+        go func(p string) {
+            defer wg.Done()
+            select {
+            case <-searchCtx.Done():
+                return
+            case semaphore <- struct{}{}:
+                defer func() { <-semaphore }()
+            }
 
-		select {
-	case data, ok := <-resultChan:
-		if ok {
-			return data, nil
-		}
-		return nil, ErrNotFound
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	}
+            content, err := os.ReadFile(p)
+            if err != nil {
+                return
+            }
+
+            if cmp(content) {
+                select {
+                case resultChan <- content:
+                    cancel() // Found it! Stop others from starting.
+                default:
+                    // Another worker already sent a result
+                }
+            }
+        }(p)
+    }
+
+    // Monitor for completion
+    go func() {
+        wg.Wait()
+        close(resultChan)
+    }()
+
+    select {
+    case data, ok := <-resultChan:
+        if ok {
+            return data, nil
+        }
+        return nil, ErrNotFound
+    case <-ctx.Done():
+        return nil, ctx.Err()
+    }
 }

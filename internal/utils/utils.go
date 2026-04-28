@@ -1,12 +1,15 @@
 package utils
 
 import (
+	"bytes"
 	"crypto/rand"
 	"crypto/sha3"
 	"encoding/hex"
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -178,4 +181,28 @@ func GetAttributeValue(obj any, fields ...string) (any, error) {
 	}
 
 	return val.Interface(), nil
+}
+
+func GetDirPath(name string)(string,error){
+	var dir string
+	cmd:=exec.Command("xdg-user-dir", name)
+	var out bytes.Buffer
+
+	if err:=cmd.Run();err==nil{
+		dir = strings.TrimSpace(out.String())
+	}
+
+	if dir==""{
+		home,err:=os.UserHomeDir()
+		if err!=nil{
+			return "",fmt.Errorf("failed to detect home directory: %w", err)
+		}
+		dir=filepath.Join(home,name)
+	}
+
+	finalPath:=filepath.Join(dir,"ProofChain")
+	if err:=os.MkdirAll(finalPath,0755);err!=nil{
+		return "",fmt.Errorf("failed to ensure ProofChain directory: %w", err)
+	}
+	return finalPath,nil
 }

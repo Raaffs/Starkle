@@ -2,18 +2,13 @@ package main
 
 import (
 	"log"
-	"os"
 	"testing"
 
 	"github.com/Suy56/ProofChain/chaincore/core"
-	"github.com/joho/godotenv"
 )
-var ETH_CLIENT_URL="http://localhost:7545"
+var ETH_CLIENT_URL="http://localhost:8545"
 
 func TestDeploy(t *testing.T){
-	if err:=godotenv.Load(".env");err!=nil{
-		t.Fatal("Error reading .env: ",err)
-	}
 	app:=&struct{
 		conn *blockchain.ClientConnection
 		in *blockchain.ContractVerifyOperations
@@ -22,7 +17,7 @@ func TestDeploy(t *testing.T){
 		in: &blockchain.ContractVerifyOperations{},
 	}
 
-	privateKey:=os.Getenv("PRIVATE_KEY")
+	privateKey:="0x4c940bf3f77c3c9251582a3c7b3849a5d08b89ff72f91d0a9e47b74c4338297e"
 	if err:=blockchain.Init(app.conn,app.in,privateKey[2:],"",ETH_CLIENT_URL);err!=nil{
 		t.Fatal(err)
 	}

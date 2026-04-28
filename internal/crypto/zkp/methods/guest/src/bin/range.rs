@@ -56,7 +56,9 @@ fn main() {
     let lower_bound: u32 = env::read();
     let upper_bound: u32 = env::read();
     let expected_root_hex: String = env::read();
-
+    env::log(&alloc::format!("Value: {}", value));
+    env::log(&alloc::format!("Lower bound: {}", lower_bound));
+    env::log(&alloc::format!("Upper bound: {}", upper_bound));
     assert!(value >= lower_bound && value <= upper_bound, "Value not in range");
 
     // 1. Calculate Leaf Hash (Raw Bytes)
@@ -69,7 +71,6 @@ fn main() {
 
     let mut current_hash_hex = to_hex_string(leaf_digest.as_bytes());
 
-    env::log(&current_hash_hex);
     for sibling in siblings {
         let mut combined = String::with_capacity(128);
         if current_hash_hex < sibling {
@@ -81,7 +82,7 @@ fn main() {
         }
         current_hash_hex = digest_to_hex(&Impl::hash_bytes(combined.as_bytes()));
     }
-
+    
     // 3. Final Check
     assert_eq!(current_hash_hex, expected_root_hex, "Merkle Root Mismatch!");
 
