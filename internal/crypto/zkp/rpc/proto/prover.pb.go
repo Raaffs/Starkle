@@ -110,6 +110,7 @@ type MembershipRequest struct {
 	Siblings      []string               `protobuf:"bytes,3,rep,name=siblings,proto3" json:"siblings,omitempty"`                       // Hex strings
 	PublicList    []string               `protobuf:"bytes,4,rep,name=public_list,json=publicList,proto3" json:"public_list,omitempty"`
 	PublicRoot    string                 `protobuf:"bytes,5,opt,name=public_root,json=publicRoot,proto3" json:"public_root,omitempty"` // Hex string
+	Path          string                 `protobuf:"bytes,6,opt,name=path,proto3" json:"path,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -179,6 +180,13 @@ func (x *MembershipRequest) GetPublicRoot() string {
 	return ""
 }
 
+func (x *MembershipRequest) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
 type RangeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ActualValue   uint32                 `protobuf:"varint,1,opt,name=actual_value,json=actualValue,proto3" json:"actual_value,omitempty"`
@@ -187,6 +195,7 @@ type RangeRequest struct {
 	LowerBound    uint32                 `protobuf:"varint,4,opt,name=lower_bound,json=lowerBound,proto3" json:"lower_bound,omitempty"`
 	UpperBound    uint32                 `protobuf:"varint,5,opt,name=upper_bound,json=upperBound,proto3" json:"upper_bound,omitempty"`
 	PublicRoot    string                 `protobuf:"bytes,6,opt,name=public_root,json=publicRoot,proto3" json:"public_root,omitempty"` // Hex string
+	Path          string                 `protobuf:"bytes,7,opt,name=path,proto3" json:"path,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -259,6 +268,13 @@ func (x *RangeRequest) GetUpperBound() uint32 {
 func (x *RangeRequest) GetPublicRoot() string {
 	if x != nil {
 		return x.PublicRoot
+	}
+	return ""
+}
+
+func (x *RangeRequest) GetPath() string {
+	if x != nil {
+		return x.Path
 	}
 	return ""
 }
@@ -438,7 +454,7 @@ const file_proto_prover_proto_rawDesc = "" +
 	"membership\x12,\n" +
 	"\x05range\x18\x02 \x01(\v2\x14.prover.RangeRequestH\x00R\x05rangeB\f\n" +
 	"\n" +
-	"proof_data\"\xb5\x01\n" +
+	"proof_data\"\xc9\x01\n" +
 	"\x11MembershipRequest\x12!\n" +
 	"\factual_value\x18\x01 \x01(\tR\vactualValue\x12\x1f\n" +
 	"\vactual_salt\x18\x02 \x01(\tR\n" +
@@ -447,7 +463,8 @@ const file_proto_prover_proto_rawDesc = "" +
 	"\vpublic_list\x18\x04 \x03(\tR\n" +
 	"publicList\x12\x1f\n" +
 	"\vpublic_root\x18\x05 \x01(\tR\n" +
-	"publicRoot\"\xd1\x01\n" +
+	"publicRoot\x12\x12\n" +
+	"\x04path\x18\x06 \x01(\tR\x04path\"\xe5\x01\n" +
 	"\fRangeRequest\x12!\n" +
 	"\factual_value\x18\x01 \x01(\rR\vactualValue\x12\x1f\n" +
 	"\vactual_salt\x18\x02 \x01(\tR\n" +
@@ -458,7 +475,8 @@ const file_proto_prover_proto_rawDesc = "" +
 	"\vupper_bound\x18\x05 \x01(\rR\n" +
 	"upperBound\x12\x1f\n" +
 	"\vpublic_root\x18\x06 \x01(\tR\n" +
-	"publicRoot\"k\n" +
+	"publicRoot\x12\x12\n" +
+	"\x04path\x18\a \x01(\tR\x04path\"k\n" +
 	"\rProofResponse\x12\x1d\n" +
 	"\n" +
 	"receipt_id\x18\x01 \x01(\tR\treceiptId\x12\x16\n" +

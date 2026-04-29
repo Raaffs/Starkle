@@ -1,5 +1,5 @@
 import "react-pro-sidebar/dist/css/styles.css";
-import { useState, useEffect } from "react"; // Import useEffect
+import { useState, useEffect } from "react"; 
 import { IsApprovedInstitute } from "../../../wailsjs/go/main/App";
 import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
 import { Box, IconButton, Typography, useTheme } from "@mui/material";
@@ -14,64 +14,67 @@ import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import LoginOutlinedIcon from "@mui/icons-material/LoginOutlined";
 import PersonAddOutlinedIcon from "@mui/icons-material/PersonAddOutlined";
-import FileOpenOutlinedIcon from "@mui/icons-material/FileOpenOutlined"; // New icon for 'Issue/Issued'
+import FileOpenOutlinedIcon from "@mui/icons-material/FileOpenOutlined";
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
-  let color = colors.grey[100]; // Default color
+  
+  let color = colors.grey[100]; 
   if (title === "Approved") {
-    color = "green";
+    color = theme.palette.mode === "dark" ? "#4ade80" : "#16a34a";
   } else if (title === "Rejected") {
-    color = "red";
+    color = theme.palette.mode === "dark" ? "#f87171" : "#dc2626";
   } else if (title === "Pending") {
-    color = "blue";
+    color = theme.palette.mode === "dark" ? "#60a5fa" : "#2563eb";
   }
+
   return (
     <MenuItem
       active={selected === title}
       style={{
         color: color,
+        margin: "2px 0", // Reduced vertical margin to prevent jumpiness
       }}
       onClick={() => setSelected(title)}
       icon={icon}
     >
-      <Typography>{title}</Typography>
+      <Typography sx={{ fontWeight: selected === title ? 700 : 400 }}>
+        {title}
+      </Typography>
       <Link to={to} />
     </MenuItem>
   );
 };
+
+// ... (imports and Item component remain exactly the same)
 
 const Sidebar = ({ authStatus }) => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [selected, setSelected] = useState("Dashboard");
-  // 1. State to hold the result of IsApprovedInstitute
-  const [isApproved, setIsApproved] = useState(null); // null means loading
+  const [isApproved, setIsApproved] = useState(null);
 
-  // 2. Use useEffect to call the asynchronous Go function
   useEffect(() => {
-    // Only call if the user is authenticated, otherwise it might not be needed
     if (authStatus) {
       IsApprovedInstitute()
         .then((result) => {
-          setIsApproved(result); // true or false
+          setIsApproved(result);
         })
         .catch((err) => {
           console.error("Error fetching institute approval status:", err);
-          setIsApproved(false); // Default to false on error
+          setIsApproved(false);
         });
     } else {
-      setIsApproved(false); // If not authenticated, assume not approved or not relevant
+      setIsApproved(false);
     }
-  }, [authStatus]); // Re-run if authStatus changes
+  }, [authStatus]);
 
-  // Optional: Show a loading state if needed
   if (isApproved === null && authStatus) {
     return (
-      <Box sx={{ p: 2, color: colors.grey[100] }}>
-        <Typography>Loading Menu...</Typography>
+      <Box sx={{ p: 4, color: colors.grey[100] }}>
+        <Typography variant="h6">Loading Menu...</Typography>
       </Box>
     );
   }
@@ -81,52 +84,69 @@ const Sidebar = ({ authStatus }) => {
       sx={{
         position: "sticky",
         display: "flex",
-        height: "100vh",
-        top: 50,
-        bottom: 10,
-        left: 10,
+        height: "calc(100vh - 40px)",
+        top: "20px",
+        bottom: "20px",
+        left: "15px",
+        marginRight: "15px",
         zIndex: 10000,
-        boxShadow:
-          theme.palette.mode === "dark"
-            ? "0px 4px 12px rgba(0,0,0,0.1)"
-            : "0px 4px 12px rgba(0,0,0,0.1)",
-        borderRadius: "27px", // added rounded corners
-
-        "& .ps-menu-root": {
-          position: "fixed",
+        "& .pro-sidebar": {
+          width: isCollapsed ? "80px" : "280px",
+          minWidth: isCollapsed ? "80px" : "280px",
         },
         "& .pro-sidebar-inner": {
           background: `${
-            theme.palette.mode === "dark" ? colors.primary[800] :colors.blueAccent[900]
+            theme.palette.mode === "dark" 
+              ? "linear-gradient(180deg, #111827 0%, #0f172a 100%)" 
+              : colors.blueAccent[900]
           } !important`,
-          borderRadius: "27px", // keep it rounded
-          overflow: "hidden", // make sure children don’t escape the rounding
+          borderRadius: "24px",
+          border: theme.palette.mode === "dark" 
+            ? "1px solid rgba(255, 255, 255, 0.05)" 
+            : "1px solid rgba(0, 0, 0, 0.05)",
+          boxShadow: "0 10px 30px rgba(0,0,0,0.15)",
+          overflow: "hidden",
         },
         "& .pro-icon-wrapper": {
           backgroundColor: "transparent !important",
         },
         "& .pro-inner-item": {
-          padding: "5px 35px 5px 10px !important",
+          padding: "8px 20px !important", // Balanced padding for centering
+          transition: "background-color 0.2s ease-in-out, color 0.2s ease-in-out !important", // Smooth, non-bouncy transition
+          margin: "4px 10px", // Standard margin for all items
+          borderRadius: "12px",
         },
-        "& .pro-inner-item:hover": {
+        // Hover effect only for non-active items
+        "& .pro-menu-item:not(.active) .pro-inner-item:hover": {
+          color: "#ffffff !important",
           background: `${colors.blueAccent[700]} !important`,
         },
+        // Active tab styling
         "& .pro-menu-item.active": {
-          color: `${colors.blueAccent[500]} !important`,
+          background: theme.palette.mode === "dark"
+            ? "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)" // Professional Blue for Dark Mode
+            : "linear-gradient(135deg, #fb7185 0%, #f97316 100%)", // Your Orange/Rose for Light Mode
+          borderRadius: "12px",
+          margin: "4px 10px",
+          color: "#ffffff !important",
+          // Disable hover styles when active
+          "& .pro-inner-item:hover": {
+            background: "transparent !important",
+            cursor: "default",
+          }
         },
+        "& .ps-menu-root": {
+           padding: "10px 0"
+        }
       }}
     >
-      <ProSidebar
-        collapsed={isCollapsed}
-        // image={theme.palette.mode=="dark"?'https://user-images.githubusercontent.com/25878302/144499035-2911184c-76d3-4611-86e7-bc4e8ff84ff5.jpg':sidebarlogo}
-      >
+      <ProSidebar collapsed={isCollapsed}>
         <Menu iconShape="circle">
-          {/* LOGO AND MENU ICON */}
           <MenuItem
             onClick={() => setIsCollapsed(!isCollapsed)}
             icon={isCollapsed ? <MenuOutlinedIcon /> : undefined}
             style={{
-              margin: "0px 0px 20px 0px",
+              margin: "15px 0 25px 0",
               color: colors.grey[100],
             }}
           >
@@ -139,140 +159,71 @@ const Sidebar = ({ authStatus }) => {
               >
                 <Typography
                   variant="h3"
-                  color={colors.greenAccent[300]}
-                  sx={{ fontFamily: "'Poppins', sans-serif" }}
+                  color={theme.palette.mode === "dark" ? colors.greenAccent[300] : colors.greenAccent[300]}
+                  sx={{ 
+                    fontFamily: "'Poppins', sans-serif", 
+                    fontWeight: 800,
+                    letterSpacing: "1px"
+                  }}
                 >
-                  ProofChain
+                  Starkle
                 </Typography>
-
                 <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
-                  <MenuOutlinedIcon />
+                  <MenuOutlinedIcon sx={{ color: colors.grey[100] }} />
                 </IconButton>
               </Box>
             )}
           </MenuItem>
 
-          {!isCollapsed && <Box mb="20px"></Box>}
-
-          <Box
-            paddingLeft={isCollapsed ? undefined : "10%"}
-            paddingRight={isCollapsed ? undefined : "10%"}
-          >
+          <Box paddingLeft={isCollapsed ? undefined : "5px"}>
             {authStatus && (
               <>
                 <Typography
-                  variant="h4"
-                  color={colors.grey[300]}
-                  sx={{ m: "15px 0 10px 2px" }}
+                  variant="h6"
+                  color={colors.grey[400]}
+                  sx={{ m: "20px 0 8px 25px", fontSize: "0.75rem", letterSpacing: "1.2px", textTransform: "uppercase" }}
                 >
-                  Dashboard
+                  Overview
                 </Typography>
-
-                <Item
-                  title="Dashboard"
-                  to="/dashboard"
-                  icon={<HomeOutlinedIcon />}
-                  selected={selected}
-                  setSelected={setSelected}
-                />
+                <Item title="Dashboard" to="/dashboard" icon={<HomeOutlinedIcon />} selected={selected} setSelected={setSelected} />
 
                 <Typography
-                  variant="h4"
-                  color={colors.grey[300]}
-                  sx={{ m: "15px 0 10px 2px" }}
+                  variant="h6"
+                  color={colors.grey[400]}
+                  sx={{ m: "25px 0 8px 25px", fontSize: "0.75rem", letterSpacing: "1.2px", textTransform: "uppercase" }}
                 >
                   Documents
                 </Typography>
-
-                <Item
-                  title="Approved"
-                  to="/documents/approved"
-                  icon={<AddTaskOutlinedIcon />}
-                  selected={selected}
-                  setSelected={setSelected}
-                />
-                <Item
-                  title="Rejected"
-                  to="/documents/rejected"
-                  icon={<CancelOutlinedIcon />}
-                  selected={selected}
-                  setSelected={setSelected}
-                  style={{ color: colors.redAccent[200] }}
-                />
-                <Item
-                  title="Pending"
-                  to="/documents/pending"
-                  icon={<TimerOutlinedIcon />}
-                  selected={selected}
-                  setSelected={setSelected}
-                />
+                <Item title="Approved" to="/documents/approved" icon={<AddTaskOutlinedIcon />} selected={selected} setSelected={setSelected} />
+                <Item title="Rejected" to="/documents/rejected" icon={<CancelOutlinedIcon />} selected={selected} setSelected={setSelected} />
+                <Item title="Pending" to="/documents/pending" icon={<TimerOutlinedIcon />} selected={selected} setSelected={setSelected} />
 
                 <Typography
-                  variant="h4"
-                  color={colors.grey[300]}
-                  sx={{ m: "15px 0 5px 5px" }}
+                  variant="h6"
+                  color={colors.grey[400]}
+                  sx={{ m: "25px 0 8px 25px", fontSize: "0.75rem", letterSpacing: "1.2px", textTransform: "uppercase" }}
                 >
-                  Verify
+                  Verify & Issue
                 </Typography>
-                {/* 3. Conditional rendering of 'Upload' */}
-                {!isApproved && (
-                  <Item
-                    title="Upload"
-                    to="/documents/upload"
-                    icon={<UploadFileOutlinedIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  />
-                )}
-
-                {/* 4. Conditional rendering of 'Issue' or 'Issued' */}
-                {isApproved ? (
-                  <Item
-                    title="Issue"
-                    to="/documents/issue" // Assuming a route for issuing documents
-                    icon={<FileOpenOutlinedIcon />}
-                    selected={selected}
-                    setSelected={setSelected}
-                  />
-                ) : (
-                  <div />
-                )}
+                {!isApproved && <Item title="Upload" to="/documents/upload" icon={<UploadFileOutlinedIcon />} selected={selected} setSelected={setSelected} />}
+                {isApproved && <Item title="Issue" to="/documents/issue" icon={<FileOpenOutlinedIcon />} selected={selected} setSelected={setSelected} />}
               </>
             )}
 
             <Typography
-              variant="h4"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 10px" }}
+              variant="h6"
+              color={colors.grey[400]}
+              sx={{ m: "25px 0 8px 25px", fontSize: "0.75rem", letterSpacing: "1.2px", textTransform: "uppercase" }}
             >
-              Accounts
+              Account
             </Typography>
-            {authStatus && (
-              <Item
-                title="Logout"
-                to="/logout"
-                icon={<LogoutOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-            )}
-            {!authStatus && (
-              <Item
-                title="Login"
-                to="/"
-                icon={<LoginOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
-            )}
-            {!authStatus && (
-              <Item
-                title="New Account"
-                to="/register"
-                icon={<PersonAddOutlinedIcon />}
-                selected={selected}
-                setSelected={setSelected}
-              />
+            {authStatus ? (
+              <Item title="Logout" to="/logout" icon={<LogoutOutlinedIcon />} selected={selected} setSelected={setSelected} />
+            ) : (
+              <>
+                <Item title="Login" to="/" icon={<LoginOutlinedIcon />} selected={selected} setSelected={setSelected} />
+                <Item title="New Account" to="/register" icon={<PersonAddOutlinedIcon />} selected={selected} setSelected={setSelected} />
+              </>
             )}
           </Box>
         </Menu>

@@ -7,10 +7,12 @@ import { useEffect, useState } from "react";
 import { DataGridSx, DataGridDarkSx } from "../../styles/styles";
 import RemoveRedEyeSharpIcon from "@mui/icons-material/RemoveRedEyeSharp";
 import DownloadForOfflineSharpIcon from "@mui/icons-material/DownloadForOfflineSharp";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 import { ViewDigitalCertificate } from "../../../wailsjs/go/main/App";
 import IssueCard from "../../components/cards/certificate";
 import PopUp from "../../components/PopUp";
 import ZKPModal from "../../components/modal/proof";
+
 const ApprovedDocuments = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
@@ -75,6 +77,7 @@ const ApprovedDocuments = () => {
       })
       .catch((err) => setError(err.message));
   };
+
   const columns = [
     { field: "Requester", headerName: "Requester", flex: 1 },
     { field: "Verifier", headerName: "Verifier", flex: 1 },
@@ -85,7 +88,6 @@ const ApprovedDocuments = () => {
       flex: 0.5,
       justifyContent: "center",
       renderCell: (params) => {
-        const doc = docs.find((doc) => doc.ID === params.id);
         return (
           <Box>
             <Button
@@ -94,28 +96,21 @@ const ApprovedDocuments = () => {
                 handleView(
                   params.row.ShaHash,
                   params.row.Institute,
-                  params.row.Requester
+                  params.row.Requester,
                 );
               }}
               sx={{
-                // Ensures the button is compact for an icon-only use case
                 minWidth: "auto",
                 padding: "6px 8px",
                 margin: 4,
-                // Subtle background for better visibility against white
-                // backgroundColor: 'rgba(0, 0, 0, 0.03)',
-                // Use hardcoded color for hover border
                 "&:hover": {
                   backgroundColor: "rgba(0, 0, 0, 0.1)",
-                  // borderColor: '#64B5F6', // A light blue border on hover
                 },
               }}
             >
               <RemoveRedEyeSharpIcon
                 sx={{
-                  // Professional Blue Color (e.g., MUI's standard info.main: #2196F3)
-                  color: `linear-gradient(45deg, #00C6FF 30%, #0072FF 90%)`,
-                  // fontSize: 20, // Adjusted size for visual balance
+                  color: `#2196F3`,
                 }}
               />
             </Button>
@@ -129,7 +124,6 @@ const ApprovedDocuments = () => {
       flex: 0.5,
       justifyContent: "center",
       renderCell: (params) => {
-        const doc = docs.find((doc) => doc.ID === params.id);
         return (
           <Box>
             <Button
@@ -140,7 +134,7 @@ const ApprovedDocuments = () => {
                     return Download(
                       params.row.ShaHash,
                       params.row.Institute,
-                      params.row.Requester
+                      params.row.Requester,
                     );
                   })
                   .then(() => {
@@ -151,24 +145,17 @@ const ApprovedDocuments = () => {
                   });
               }}
               sx={{
-                // Ensures the button is compact for an icon-only use case
                 minWidth: "auto",
                 padding: "6px 8px",
                 margin: 4,
-                // Subtle background for better visibility against white
-                // backgroundColor: 'rgba(0, 0, 0, 0.03)',
-                // Use hardcoded color for hover border
                 "&:hover": {
                   backgroundColor: "rgba(0, 0, 0, 0.1)",
-                  // borderColor: '#64B5F6', // A light blue border on hover
                 },
               }}
             >
               <DownloadForOfflineSharpIcon
                 sx={{
-                  // Professional Blue Color (e.g., MUI's standard info.main: #2196F3)
-                  color: `linear-gradient(45deg, #00C6FF 30%, #0072FF 90%)`,
-                  // fontSize: 20, // Adjusted size for visual balance
+                  color: `#2196F3`,
                 }}
               />
             </Button>
@@ -183,20 +170,59 @@ const ApprovedDocuments = () => {
       m="20px"
       sx={{ width: "dynamic", maxWidth: "95%", justifyContent: "center" }}
     >
-       <Button
-        onClick={openZKPModal}
-        sx={{
-              "&.Mui-disabled": {
-                opacity: 0.45,
-                color: "white !important",
-                background:
-                  "linear-gradient(90deg, #E94057 10%, #F27121 90%) !important",
-              },
-            }}
-      >Auto Generate Proof
-      </Button>
+      {/* Top Header Section with Button Positioning */}
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
+        mb="20px"
+      >
+        <Header title="Approved Documents" />
+        <Button
+          onClick={openZKPModal}
+          variant="contained"
+          startIcon={<AutoAwesomeIcon />}
+          sx={{
+            // Logic for Light/Dark mode styling
+            background:
+              theme.palette.mode === "dark"
+                ? "linear-gradient(45deg, #1e3a8a 30%, #3b82f6 90%)" // Your existing Dark Mode
+                : "linear-gradient(135deg, #fb7185 0%, #f97316 100%)", // Matches your Light Mode Header
 
-            {error && (
+            color: "#ffffff",
+            fontWeight: 700,
+            padding: "10px 22px",
+            borderRadius: "12px",
+            textTransform: "none",
+            fontSize: "0.95rem",
+            boxShadow:
+              theme.palette.mode === "dark"
+                ? "0 4px 15px rgba(0,0,0,0.4)"
+                : "0 4px 12px rgba(249, 115, 22, 0.25)",
+            border:
+              theme.palette.mode === "dark" ? "none" : "1px solid #c3c6fd",
+            transition: "all 0.2s ease-in-out",
+
+            "&:hover": {
+              transform: "translateY(-2px)",
+              filter: "brightness(1.05)",
+              boxShadow:
+                theme.palette.mode === "dark"
+                  ? "0 6px 20px rgba(0,0,0,0.5)"
+                  : "0 6px 16px rgba(251, 113, 133, 0.3)",
+            },
+
+            "&.Mui-disabled": {
+              opacity: 0.5,
+              color: "white !important",
+            },
+          }}
+        >
+          Auto Generate Proof
+        </Button>{" "}
+      </Box>
+
+      {error && (
         <PopUp
           Error={error}
           Message=""
@@ -210,12 +236,11 @@ const ApprovedDocuments = () => {
           Message={message}
           Error={null}
           onClose={() => {
-            setError(null);
+            setMessage("");
           }}
         />
       )}
 
-      <Header title="Approved Documents" />
       {error && (
         <Typography
           color="error"
@@ -225,8 +250,9 @@ const ApprovedDocuments = () => {
           {error}
         </Typography>
       )}
+
       <Box
-        m="40px 0 0 0"
+        m="10px 0 0 0"
         height="70vh"
         justifyContent="center"
         sx={{
@@ -253,15 +279,17 @@ const ApprovedDocuments = () => {
             color: `${colors.greenAccent[200]} !important`,
           },
         }}
-      >        <DataGrid
+      >
+        <DataGrid
           columns={columns}
           rows={docs}
-          getRowId={(row) => row.ID} // Use `ID` as a unique identifier
+          getRowId={(row) => row.ID}
           sx={theme.palette.mode === "dark" ? DataGridDarkSx : DataGridSx}
         />
       </Box>
-     
+
       <ZKPModal open={zkpModalOpen} onClose={closeZKPModal} />
+
       <Modal
         onClose={() => {
           setModal(false);
@@ -278,15 +306,10 @@ const ApprovedDocuments = () => {
           sx={{
             backgroundColor: "white",
             borderRadius: "18px",
-            // display: "flex",
-            // gap: 4,
-            // maxHeight: "92vh",
             overflow: "hidden",
             background: `${
               theme.palette.mode === "dark" ? "black" : "transparent"
             } !important`,
-
-            // p: 4,
           }}
         >
           <IssueCard

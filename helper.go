@@ -245,7 +245,7 @@ type Proof interface {
 		salt string,
 		expectedRoot string,
 		siblings []string,
-		
+		basePath string,
 	)*pb.ProofRequest
 }
 
@@ -261,6 +261,7 @@ func (r Range) BuildProofRequest(
 	salt string,
 	expectedRoot string,
 	siblings []string,
+	basePath string,
 )*pb.ProofRequest {
 	switch v := actualValue.(type) {
 		case float64:
@@ -282,6 +283,7 @@ func (r Range) BuildProofRequest(
 				LowerBound:  uint32(r.lower),
 				UpperBound:  uint32(r.upper),
 				PublicRoot:  expectedRoot, 
+				Path: basePath,
 			},
 		},
 	}
@@ -298,6 +300,7 @@ func (m Membership) BuildProofRequest(
 	salt string,
 	expectedRoot string,
 	siblings []string,
+	basePath string,
 )*pb.ProofRequest {
 	var ok bool
 	m.actualValue,ok=(actualValue).(string); if !ok{
@@ -312,6 +315,7 @@ func (m Membership) BuildProofRequest(
 				Siblings:    siblings, 
 				PublicList:  m.members,
 				PublicRoot:  expectedRoot,
+				Path: basePath,
 			},
 		},
 	}

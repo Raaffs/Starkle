@@ -4,7 +4,7 @@ import Header from "../../components/Header";
 import { IssueCertificate } from "../../../wailsjs/go/main/App";
 import { useTheme } from "@mui/material/styles"; 
 import { tokens } from "../../themes";
-
+import PopUp from "../../components/PopUp";
 const Issue = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode); 
@@ -19,7 +19,7 @@ const Issue = () => {
         
         // The fix is here:
         alignItems: "flex-start", // Aligns children to the left (cross axis)
-        background: `${theme.palette.mode==="dark" ? 'black' : 'white'} !important`,
+        background: `${theme.palette.mode==="dark" ? 'transparent' : 'transparent'} !important`,
         p: 2,
         width: "100%", // Ensure the Box takes full width to see the alignment
       }}

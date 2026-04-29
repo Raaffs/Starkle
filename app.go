@@ -399,7 +399,7 @@ func (app *App) IssueCertificate(certificate models.CertificateData) (msg string
 	log.Println(certificate)	
     cert, publicCommit, err := app.PrepareDigitalCopy(certificate)
     if err != nil {
-        app.logger.Error("Error preparing digital copy","err", err)
+        app.logger.Error("Error preparing digital certficate","err", err.Error())
         return "",fmt.Errorf("An error occurred while issuing certificate")
     }
 	
@@ -494,7 +494,7 @@ func (app *App)GenerateZKPOffline(mode string, constraints []string)(string,erro
 		return "",fmt.Errorf("an error occurred while generating proof")
 	}
 	defer closeConn()
-	req:=prover.BuildProofRequest(constraints,merkleProof[constraints[0]].Value,merkleProof[constraints[0]].Salt,root,siblings)
+	req:=prover.BuildProofRequest(constraints,merkleProof[constraints[0]].Value,merkleProof[constraints[0]].Salt,root,siblings, filepath.Join(basePath,"receipts"))
 	resp, err := client.GenerateProof(context.Background(), req)
 	if err != nil {
 		app.logger.Error("error generating proof from rpc","err", err.Error())

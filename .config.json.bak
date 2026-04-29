@@ -34,6 +34,21 @@
             "accountPath": "/home/Ark/.config/proofchain/account/UTC--2026-02-09T00-51-42.044985156Z--f76872c201499d19c1efac60d23dc805944ecaa9",
             "keyPath": "/home/Ark/.config/proofchain/key/1770598302054085230",
             "identityPath": ""
+        },
+        "Mari": {
+            "accountPath": "/home/Ark/.config/proofchain/account/UTC--2026-04-25T10-35-40.539183830Z--783fe530994028725c03642435365aeae4f59a26",
+            "keyPath": "/home/Ark/.config/proofchain/key/1777113340552472550",
+            "identityPath": ""
+        },
+        "Mariaa": {
+            "accountPath": "/home/Ark/.config/proofchain/account/UTC--2026-04-25T10-17-20.866612371Z--b166e310c81eaac2040ad91271dc4ade9817e077",
+            "keyPath": "/home/Ark/.config/proofchain/key/1777112240882962565",
+            "identityPath": ""
+        },
+        "inst": {
+            "accountPath": "/home/Ark/.config/proofchain/account/UTC--2026-04-25T10-31-10.280774062Z--172849439b8d22c98d7ec26a49045660b05096ef",
+            "keyPath": "/home/Ark/.config/proofchain/key/1777113070296499837",
+            "identityPath": ""
         }
     },
     "dirs": {

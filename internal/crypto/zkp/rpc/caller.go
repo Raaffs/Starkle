@@ -47,7 +47,7 @@ func (c *ZKProverClient) RequestMembershipProof(
 	allLeaves []string,
 	publicList []string,
 	publicRoot string,
-
+	path string,
 )(*pb.ProofResponse, error){
 	req := &pb.ProofRequest{
 		ProofData: &pb.ProofRequest_Membership{
@@ -57,6 +57,7 @@ func (c *ZKProverClient) RequestMembershipProof(
 				Siblings:   allLeaves,
 				PublicList:  publicList,
 				PublicRoot:  publicRoot,
+				Path: path,
 			},
 		},
 	}
@@ -71,7 +72,7 @@ func (c *ZKProverClient) RequestRangeProof(
 	lowerBound uint32,
 	upperBound uint32,
 	publicRoot string,
-
+	path string,
 )(*pb.ProofResponse, error){
 	req := &pb.ProofRequest{
 		ProofData: &pb.ProofRequest_Range{
@@ -82,6 +83,7 @@ func (c *ZKProverClient) RequestRangeProof(
 				LowerBound: lowerBound,
 				UpperBound: upperBound,
 				PublicRoot:  publicRoot,
+				Path: path,
 			},
 		},
 	}

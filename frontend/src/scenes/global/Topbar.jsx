@@ -15,7 +15,7 @@ const Topbar=()=>{
     const colorMode=useContext(ColorModeContext)
     return(
     <Box display="flex" justifyContent="space-between" p={3} >
-      <Header title="ProofChain" subtitle="Immutable"></Header>
+      <Header title="Starkle" subtitle="Immutable"></Header>
       <Box/>
       <Box alignItems="center">
         <IconButton onClick={colorMode.toggleColorMode}>

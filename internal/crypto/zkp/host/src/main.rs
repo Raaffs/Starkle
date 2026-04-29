@@ -16,17 +16,27 @@ use prover::{ProofRequest, ProofResponse, VerifyRequest, VerifyResponse, proof_r
 pub struct ProverHost;
 
 impl ProverHost {
-    fn save_receipt(receipt: &Receipt) -> String {
-        let receipt_bytes = bincode::serialize(receipt).unwrap();
-        let mut hasher = Sha256::new();
-        hasher.update(&receipt_bytes);
-        let id = hex::encode(hasher.finalize());
-        let dir = "receipts";
-        if !Path::new(dir).exists() { 
-            fs::create_dir_all(dir).expect("Failed to create receipts directory"); 
+    /// Saves the receipt to a specific directory with a descriptive filename.
+    /// base_path: Absolute path from the request (e.g., /home/user/...)
+    /// filename: Constraint-based name (e.g., "list_item1_item2" or "lb10_ub20")
+    fn save_receipt(receipt: &Receipt, base_path: &str, filename: &str) -> Result<String, Status> {
+        let receipt_bytes = bincode::serialize(receipt)
+            .map_err(|e| Status::internal(format!("Serialization failed: {}", e)))?;
+        
+        let path = Path::new(base_path);
+        if !path.exists() { 
+            fs::create_dir_all(path)
+                .map_err(|e| Status::internal(format!("Failed to create directory: {}", e)))?; 
         }
-        fs::write(format!("{}/{}.bin", dir, id), &receipt_bytes).expect("Failed to write receipt");
-        id
+
+        // sanitize filename slightly to ensure no OS conflicts
+        let safe_filename = filename.replace(|c: char| !c.is_alphanumeric() && c != '_' && c != '-', "_");
+        let full_path = path.join(format!("{}.bin", safe_filename));
+        
+        fs::write(&full_path, &receipt_bytes)
+            .map_err(|e| Status::internal(format!("Failed to write receipt: {}", e)))?;
+        
+        Ok(full_path.to_string_lossy().into_owned())
     }
 }
 
@@ -37,43 +47,41 @@ impl ProverService for ProverHost {
         
         match req.proof_data {
             Some(ProofData::Membership(m)) => {
-                println!("🚀 Received Membership Proof Request (Path length: {})", m.siblings.len());
+                println!("🚀 Membership Request. Path: {}, List items: {}", m.path, m.public_list.len());
                 
-                // We pass the root as a string because the Guest is reconstructing the 
-                // root as a hex string to stay 1:1 compatible with your Go logic.
                 let env = ExecutorEnv::builder()
                     .write(&m.actual_value).unwrap()
                     .write(&m.actual_salt).unwrap() 
-                    .write(&m.siblings).unwrap()  // This is now the Siblings Path
+                    .write(&m.siblings).unwrap()  
                     .write(&m.public_list).unwrap()
-                    .write(&m.public_root).unwrap() // The target root hex string
+                    .write(&m.public_root).unwrap() 
                     .build()
                     .map_err(|e| Status::internal(format!("Env build failed: {}", e)))?;
 
-                println!("  -> Starting Prover (CPU/GPU Auto-fallback)...");
                 let prover = get_prover_server(&ProverOpts::default())
                     .map_err(|e| Status::internal(format!("Prover init failed: {}", e)))?;
                 
                 let prove_info = prover.prove(env, MEMBERSHIP_ELF)
                     .map_err(|e| Status::internal(format!("Proving failed: {}", e)))?;
                 
-                let cycles = prove_info.stats.total_cycles;
-                println!("  ✅ Membership Proof Generated! Cycles: {}", cycles);
-                
-                let receipt_bytes = bincode::serialize(&prove_info.receipt)
-                    .map_err(|e| Status::internal(format!("Serialization failed: {}", e)))?;
-                
-                let receipt_id = Self::save_receipt(&prove_info.receipt);
+                // Filename based on public list (joined items)
+                let filename = if m.public_list.is_empty() {
+                    "empty_list".to_string()
+                } else {
+                    m.public_list.join("_")
+                };
+
+                let receipt_path = Self::save_receipt(&prove_info.receipt, &m.path, &filename)?;
                 
                 Ok(Response::new(ProofResponse {
-                    receipt_id,
-                    cycles: cycles as u32,
-                    receipt_bytes,
+                    receipt_id: receipt_path,
+                    cycles: prove_info.stats.total_cycles as u32,
+                    receipt_bytes: bincode::serialize(&prove_info.receipt).unwrap(),
                 }))
             },
 
             Some(ProofData::Range(r)) => {
-                println!("🚀 Received Range Proof Request ({} leaves)", r.siblings.len());
+                println!("🚀 Range Request. Path: {}, Range: {} - {}", r.path, r.lower_bound, r.upper_bound);
 
                 let env = ExecutorEnv::builder()
                     .write(&r.actual_value).unwrap()
@@ -85,25 +93,20 @@ impl ProverService for ProverHost {
                     .build()
                     .map_err(|e| Status::internal(format!("Env build failed: {}", e)))?;
 
-                println!("  -> Starting Prover...");
                 let prover = get_prover_server(&ProverOpts::default())
                     .map_err(|e| Status::internal(format!("Prover init failed: {}", e)))?;
                 
                 let prove_info = prover.prove(env, RANGE_ELF)
                     .map_err(|e| Status::internal(format!("Proving failed: {}", e)))?;
                 
-                let cycles = prove_info.stats.total_cycles;
-                println!("  ✅ Range Proof Generated! Cycles: {}", cycles);
-                
-                let receipt_bytes = bincode::serialize(&prove_info.receipt)
-                    .map_err(|e| Status::internal(format!("Serialization failed: {}", e)))?;
-                
-                let receipt_id = Self::save_receipt(&prove_info.receipt);
+                // Filename based on lower/upper bounds
+                let filename = format!("lb{}_ub{}", r.lower_bound, r.upper_bound);
+                let receipt_path = Self::save_receipt(&prove_info.receipt, &r.path, &filename)?;
                 
                 Ok(Response::new(ProofResponse {
-                    receipt_id,
-                    cycles: cycles as u32,
-                    receipt_bytes,
+                    receipt_id: receipt_path,
+                    cycles: prove_info.stats.total_cycles as u32,
+                    receipt_bytes: bincode::serialize(&prove_info.receipt).unwrap(),
                 }))
             },
 
@@ -113,23 +116,24 @@ impl ProverService for ProverHost {
 
     async fn verify_proof(&self, request: Request<VerifyRequest>) -> Result<Response<VerifyResponse>, Status> {
         let req = request.into_inner();
-        let path = format!("receipts/{}.bin", req.receipt_id);
         
-        let bytes = fs::read(path).map_err(|_| Status::not_found("Receipt file not found"))?;
+        // receipt_id is now the full path returned by generate_proof
+        let bytes = fs::read(&req.receipt_id)
+            .map_err(|_| Status::not_found(format!("Receipt file not found at {}", req.receipt_id)))?;
+            
         let receipt: Receipt = bincode::deserialize(&bytes)
             .map_err(|e| Status::internal(format!("Receipt deserialization failed: {}", e)))?;
         
-        // Try verifying against both known Image IDs
         let result = receipt.verify(MEMBERSHIP_ID)
             .or_else(|_| receipt.verify(RANGE_ID));
 
         match result {
             Ok(_) => {
-                println!("✅ Verification Successful for receipt {}", req.receipt_id);
+                println!("✅ Verified: {}", req.receipt_id);
                 Ok(Response::new(VerifyResponse { valid: true, error_msg: "".into() }))
             },
             Err(e) => {
-                println!("❌ Verification Failed: {}", e);
+                println!("❌ Failed: {}", e);
                 Ok(Response::new(VerifyResponse { valid: false, error_msg: e.to_string() }))
             },
         }
@@ -138,10 +142,6 @@ impl ProverService for ProverHost {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("--- Image IDs for Frontend ---");
-    println!("MEMBERSHIP_ID: 0x{}", hex::encode(Digest::from(MEMBERSHIP_ID)));
-    println!("RANGE_ID:      0x{}", hex::encode(Digest::from(RANGE_ID)));
-    println!("------------------------------");
     let addr = "127.0.0.1:50051".parse()?; 
     println!("✅ ZKP Prover gRPC Server running on {}", addr);
 
