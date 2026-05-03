@@ -112,6 +112,19 @@ Starkle is a privacy-preserving identity platform that allows users to selective
         "RPC_PROVIDERS_URLS": {
     ...
    ```
+5. Set up risc0
+   ```sh
+     cd Starkle/internal/crypto/zkp
+   ```
+   ```sh
+   NVCC_APPEND_FLAGS="-arch=sm_86 -DNDEBUG" \
+   RISC0_GPU_BACKEND=cuda \
+   cargo build --release --bin host
+   ```
+6. Start prover
+   ```sh
+   ./target/release/host                
+   ```
 ---
 ### Set Up storage service
 1. Go to the directory where you install ProofChain-Store
@@ -124,14 +137,14 @@ Starkle is a privacy-preserving identity platform that allows users to selective
    # Application Secret Key to access secure routes and perform sensitive operations
    SECRET_KEY=secret
    ```
-4. Install dependencies
+3 . Install dependencies
    ```sh
    go mod download
    ```
-3. Run the storage service
-   ```bash
-   go run .
-   ```
+4. Run the storage service
+```bash
+  go run .
+```
   Storage service should be up on port 8754
   
   ___Note__: If you are running storage service on some other port, make sure to edit .config.json in starkle to that specific port_
@@ -156,19 +169,23 @@ wails build
 
 <!-- UML -->
 ## UML
- ### 1. Uploading Documents
+ ### 1. Systeml Workflow
+<img width="1287" height="832" alt="system workflow" src="https://github.com/user-attachments/assets/b8966fab-716f-4829-bc83-e2778918af9c" />
+
+
+ ### 2. Uploading Documents
 <img width="1662" height="1459" alt="1" src="https://github.com/user-attachments/assets/2506121d-06b6-4b76-95db-a99c09eb29d2" />
 
 ---
- ### 2. Creating digital copy
+ ### 3. Creating digital copy
 <img width="1647" height="1312" alt="2" src="https://github.com/user-attachments/assets/44e06519-68e7-49c6-bf42-436fbf2e333d" />
 
 ---
- ### 3. Issuing digital certificate 
+ ### 4. Issuing digital certificate 
 <img width="1373" height="1083" alt="4" src="https://github.com/user-attachments/assets/f9393a43-07fd-43cf-8712-c5df9643801a" />
 
 ---
- ### 4. Third Party Verification
+ ### 5. Third Party Verification
 <img width="1434" height="1074" alt="3" src="https://github.com/user-attachments/assets/98bde04d-f3d3-4a79-b9cd-aad0f8d5f797" />
 
 ---
