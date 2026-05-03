@@ -2,7 +2,7 @@
 <br />
 <div align="center">
 
-  <h1 align="center">ProofChain</h1>
+  <h1 align="center">Starkle</h1>
 
   <p align="center">
 </div>
@@ -39,11 +39,13 @@
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
-Proofchain is a document verficationa and certficate issuance platform, allowing users to selectively disclose their identity to third party verifiers without exposing any extra Personally Identifiable Information
+Starkle is a privacy-preserving identity platform that allows users to selectively disclose attributes or prove identity predicates (e.g., age range or set-membership) without exposing raw Personally Identifiable Information (PII). It utilizes Merkle Trees for point disclosure and RISC0 (STARKs) for verifiable computational logic.
+
 * Digital certificates and Digital copies of documents issued by authorized institutions are structured as Merkle Trees where only the root is stored on-chain. This allows users to provide   cryptographic proofs for individual fields that verifiers can validate against the Ethereum ledger.
-* The public ECDH keys of institutions and requestors are stored on blockchain
-* The digital certificates and documents are encrypted using ECDH for key exchange and AES-256 for encryption and stored off-chain on mongodb, ensuring only the requestor and issuing institution can view the document
-* Third-party verifiers can recompute the Merkle tree from shared fields and confirm authenticity by comparing the result against the issuer’s on-chain root, verifying specific data points without accessing unrevealed fields.
+* Utilizes RISC0 zkVM to generate STARK receipts for identity predicates. This allows users to prove specific data conditions (like age ranges) without revealing the actual attribute values.
+* A high-performance Go-Rust gRPC pipeline delivers public and private inputs alongside O(logn) sibling paths to the zkVM. The architecture is designed to minimize guest memory overhead during the proof generation process for documents containing large attribute sets.
+* Documents are structured as Merkle Trees and encrypted off-chain in MongoDB using AES-256 and ECDH. Only the issuing institution and the owner via cryptographic signing can access or reveal the records.
+* Verification is achieved either by validating STARK receipts where the guest code has committed the Merkle root or by providing a Merkle proof of disclosed values and sibling paths. In the latter case, the verifier recomputes the Merkle root and confirms authenticity by comparing the result against the issuer's on-chain root.
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
@@ -82,14 +84,14 @@ Proofchain is a document verficationa and certficate issuance platform, allowing
     ```
 4. Clone Repository
     ```sh
-    git clone https://github.com/Raaffs/ProofChain.git
+    git clone https://github.com/Raaffs/Starkle.git
     ```
   ---
 ### Set Up
 
 1. Set up in `.env` file
     ```
-    cd ProofChain
+    cd Starkle
     PRIVATE_KEY=YOUR_PRIVATE_KEY
     ```
 2. Set up config
@@ -116,7 +118,7 @@ Proofchain is a document verficationa and certficate issuance platform, allowing
 2. Set up .env
    ```sh
    MONGO_URI=your_mongo_url
-   MONGO_DB=ProofChain
+   MONGO_DB=Starkle
    MONGO_COLLECTION_DOCUMENTS=Documents
    MONGO_COLLECTION_INSTITUTES=institute
    # Application Secret Key to access secure routes and perform sensitive operations
@@ -132,7 +134,7 @@ Proofchain is a document verficationa and certficate issuance platform, allowing
    ```
   Storage service should be up on port 8754
   
-  ___Note__: If you are running storage service on some other port, make sure to edit .config.json in proofchain to that specific port_
+  ___Note__: If you are running storage service on some other port, make sure to edit .config.json in starkle to that specific port_
   
   ---
 ### Build & Run the app
@@ -141,7 +143,7 @@ Make sure you've ganache & storage service up and running
 wails build
 ```
 ```bash
-./build/bin/ProofChain
+./build/bin/starkle
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
